@@ -1,4 +1,4 @@
-import { Shield, Menu, X, LogOut } from "lucide-react";
+import { Shield, Menu, X, LogOut, LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   const scrollTo = (id: string) => {
@@ -83,9 +83,13 @@ const Navbar = () => {
           <Button size="sm" className="ml-3 glow-primary" onClick={() => scrollTo("contact")}>
             Get a Quote
           </Button>
-          {session && (
+          {session ? (
             <Button size="sm" variant="ghost" onClick={handleSignOut} className="ml-1">
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
+            </Button>
+          ) : (
+            <Button size="sm" variant="ghost" onClick={() => navigate("/auth")} className="ml-1">
+              <LogIn className="w-4 h-4 mr-1" /> Login
             </Button>
           )}
         </div>
@@ -107,9 +111,13 @@ const Navbar = () => {
             </button>
           ))}
           <Button size="sm" className="w-full mt-2" onClick={() => scrollTo("contact")}>Get a Quote</Button>
-          {session && (
+          {session ? (
             <Button size="sm" variant="ghost" className="w-full" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-1" /> Sign Out
+            </Button>
+          ) : (
+            <Button size="sm" variant="ghost" className="w-full" onClick={() => { setOpen(false); navigate("/auth"); }}>
+              <LogIn className="w-4 h-4 mr-1" /> Login
             </Button>
           )}
         </div>

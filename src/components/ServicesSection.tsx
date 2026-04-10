@@ -1,30 +1,44 @@
-import { Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock, Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, FlaskConical, Bug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
+  Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, FlaskConical, Bug,
+  Shield, Star, Clock, Users, Award, Headphones, CheckCircle, Phone,
+  Mail, Briefcase, Eye, Image, Video, Link, AlertCircle, Settings, Plus, Edit, Save
+} from "lucide-react";
 
-const physicalServices = [
-  { icon: Camera, title: "CCTV Installation & Maintenance", desc: "HD surveillance systems with 24/7 recording and remote viewing." },
-  { icon: Bell, title: "Alarm Systems", desc: "Smart intrusion detection with instant alert notifications." },
-  { icon: KeyRound, title: "Access Control", desc: "Biometric, card, and smart lock systems for secure entry." },
-  { icon: ShieldCheck, title: "Security Consultancy", desc: "Expert risk assessment and security planning for your premises." },
-  { icon: Monitor, title: "Remote Monitoring", desc: "Real-time surveillance monitoring from our operations centre." },
+const iconMap: Record<string, React.ElementType> = {
+  Shield, Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
+  Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
+  Clock, Users, Award, Headphones, Star, CheckCircle, Phone, Mail,
+  Briefcase, Eye, Image, Video, Link, AlertCircle, Settings, Plus, Edit, Save
+};
+
+const fallbackPhysical = [
+  { icon: "Camera", title: "CCTV Installation & Maintenance", description: "HD surveillance systems with 24/7 recording and remote viewing.", category: "physical" },
+  { icon: "Bell", title: "Alarm Systems", description: "Smart intrusion detection with instant alert notifications.", category: "physical" },
+  { icon: "KeyRound", title: "Access Control", description: "Biometric, card, and smart lock systems for secure entry.", category: "physical" },
+  { icon: "ShieldCheck", title: "Security Consultancy", description: "Expert risk assessment and security planning for your premises.", category: "physical" },
+  { icon: "Monitor", title: "Remote Monitoring", description: "Real-time surveillance monitoring from our operations centre.", category: "physical" },
 ];
 
-const cyberServices = [
-  { icon: Globe, title: "Cyber Security", desc: "Comprehensive digital defence against online threats." },
-  { icon: Network, title: "Network Security", desc: "Firewall, VPN, and network hardening solutions." },
-  { icon: Lock, title: "Information Security", desc: "Data protection, encryption, and compliance services." },
-  { icon: Cpu, title: "IT Security", desc: "Endpoint protection and secure IT infrastructure." },
-  { icon: ShieldAlert, title: "Threat Analysis", desc: "Proactive threat intelligence and monitoring." },
-  { icon: Search, title: "Vulnerability Assessment", desc: "Identify and remediate security weaknesses." },
-  { icon: Siren, title: "Incident Response", desc: "Rapid response and recovery from security breaches." },
-  { icon: KeySquare, title: "Cryptography", desc: "Advanced encryption and secure communications." },
-  { icon: Skull, title: "Ethical Hacking", desc: "Authorised simulated attacks to test your defences." },
-  { icon: Bug, title: "Penetration Testing", desc: "In-depth testing to uncover exploitable vulnerabilities." },
+const fallbackCyber = [
+  { icon: "Globe", title: "Cyber Security", description: "Comprehensive digital defence against online threats.", category: "cyber" },
+  { icon: "Network", title: "Network Security", description: "Firewall, VPN, and network hardening solutions.", category: "cyber" },
+  { icon: "Lock", title: "Information Security", description: "Data protection, encryption, and compliance services.", category: "cyber" },
+  { icon: "Cpu", title: "IT Security", description: "Endpoint protection and secure IT infrastructure.", category: "cyber" },
+  { icon: "ShieldAlert", title: "Threat Analysis", description: "Proactive threat intelligence and monitoring.", category: "cyber" },
+  { icon: "Search", title: "Vulnerability Assessment", description: "Identify and remediate security weaknesses.", category: "cyber" },
+  { icon: "Siren", title: "Incident Response", description: "Rapid response and recovery from security breaches.", category: "cyber" },
+  { icon: "KeySquare", title: "Cryptography", description: "Advanced encryption and secure communications.", category: "cyber" },
+  { icon: "Skull", title: "Ethical Hacking", description: "Authorised simulated attacks to test your defences.", category: "cyber" },
+  { icon: "Bug", title: "Penetration Testing", description: "In-depth testing to uncover exploitable vulnerabilities.", category: "cyber" },
 ];
 
-const ServiceCard = ({ icon: Icon, title, desc, index }: { icon: React.ElementType; title: string; desc: string; index: number }) => {
+const ServiceCard = ({ icon, title, description, index }: { icon: string; title: string; description: string; index: number }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const Icon = iconMap[icon] || Shield;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -47,43 +61,63 @@ const ServiceCard = ({ icon: Icon, title, desc, index }: { icon: React.ElementTy
         <Icon className="w-5 h-5 text-primary" />
       </div>
       <h3 className="font-display font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 };
 
-const ServicesSection = () => (
-  <section id="services" className="py-20 md:py-28">
-    <div className="container px-4">
-      <div className="text-center mb-16">
-        <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">What We Offer</p>
-        <h2 className="text-3xl md:text-5xl font-bold font-display">Our Services</h2>
-        <p className="text-muted-foreground mt-3 max-w-xl mx-auto">End-to-end security solutions tailored to protect your business and home.</p>
-      </div>
+const ServicesSection = () => {
+  const [physical, setPhysical] = useState(fallbackPhysical);
+  const [cyber, setCyber] = useState(fallbackCyber);
 
-      <div className="mb-16">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
-          <h3 className="text-lg font-display font-semibold text-muted-foreground whitespace-nowrap">Physical Security</h3>
-          <div className="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent" />
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {physicalServices.map((s, i) => <ServiceCard key={s.title} {...s} index={i} />)}
-        </div>
-      </div>
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from("services").select("*").order("display_order");
+      if (data && data.length > 0) {
+        setPhysical(data.filter(s => s.category === "physical"));
+        setCyber(data.filter(s => s.category === "cyber"));
+      }
+    };
+    load();
+  }, []);
 
-      <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-px flex-1 bg-gradient-to-r from-accent/40 to-transparent" />
-          <h3 className="text-lg font-display font-semibold text-muted-foreground whitespace-nowrap">Cyber Security</h3>
-          <div className="h-px flex-1 bg-gradient-to-l from-accent/40 to-transparent" />
+  return (
+    <section id="services" className="py-20 md:py-28">
+      <div className="container px-4">
+        <div className="text-center mb-16">
+          <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">What We Offer</p>
+          <h2 className="text-3xl md:text-5xl font-bold font-display">Our Services</h2>
+          <p className="text-muted-foreground mt-3 max-w-xl mx-auto">End-to-end security solutions tailored to protect your business and home.</p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cyberServices.map((s, i) => <ServiceCard key={s.title} {...s} index={i} />)}
-        </div>
+
+        {physical.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-primary/40 to-transparent" />
+              <h3 className="text-lg font-display font-semibold text-muted-foreground whitespace-nowrap">Physical Security</h3>
+              <div className="h-px flex-1 bg-gradient-to-l from-primary/40 to-transparent" />
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {physical.map((s, i) => <ServiceCard key={s.title + i} icon={s.icon} title={s.title} description={s.description} index={i} />)}
+            </div>
+          </div>
+        )}
+
+        {cyber.length > 0 && (
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-accent/40 to-transparent" />
+              <h3 className="text-lg font-display font-semibold text-muted-foreground whitespace-nowrap">Cyber Security</h3>
+              <div className="h-px flex-1 bg-gradient-to-l from-accent/40 to-transparent" />
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cyber.map((s, i) => <ServiceCard key={s.title + i} icon={s.icon} title={s.title} description={s.description} index={i} />)}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export default ServicesSection;

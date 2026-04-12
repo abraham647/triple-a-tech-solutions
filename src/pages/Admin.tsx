@@ -559,7 +559,7 @@ const Admin = () => {
             </div>
             <div className="flex gap-2 mb-4">
               {[{ key: "all", label: "All" }, { key: "active", label: "Active" }, { key: "released", label: "Released" }].map(f => (
-                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key)} className="rounded-xl">
+                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key as "all" | "active" | "released")} className="rounded-xl">
                   {f.label} ({f.key === "all" ? employees.length : f.key === "active" ? employees.filter(e => e.is_active).length : employees.filter(e => !e.is_active).length})
                 </Button>
               ))}

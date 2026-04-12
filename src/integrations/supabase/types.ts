@@ -47,6 +47,44 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_records: {
+        Row: {
+          created_at: string
+          description: string | null
+          employee_id: string
+          id: string
+          record_type: string
+          recorded_by: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          employee_id: string
+          id?: string
+          record_type?: string
+          recorded_by?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          employee_id?: string
+          id?: string
+          record_type?: string
+          recorded_by?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           created_at: string
@@ -60,6 +98,7 @@ export type Database = {
           qr_code: string
           released_at: string | null
           role: string
+          suspended_at: string | null
           updated_at: string
         }
         Insert: {
@@ -74,6 +113,7 @@ export type Database = {
           qr_code?: string
           released_at?: string | null
           role: string
+          suspended_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -88,6 +128,7 @@ export type Database = {
           qr_code?: string
           released_at?: string | null
           role?: string
+          suspended_at?: string | null
           updated_at?: string
         }
         Relationships: []

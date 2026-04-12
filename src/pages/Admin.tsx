@@ -34,6 +34,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [tab, setTab] = useState<TabType>("services");
+  const [empFilter, setEmpFilter] = useState<"all" | "active" | "released">("all");
 
   // Data states
   const [services, setServices] = useState<any[]>([]);

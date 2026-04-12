@@ -548,9 +548,8 @@ const Admin = () => {
 
         {/* EMPLOYEES TAB */}
         {tab === "employees" && (() => {
-          const empFilter = (window as any).__empFilter || "all";
-          const setEmpFilter = (v: string) => { (window as any).__empFilter = v; setTab("employees"); };
           const filtered = empFilter === "active" ? employees.filter(e => e.is_active) : empFilter === "released" ? employees.filter(e => !e.is_active) : employees;
+          return (
           return (
           <div>
             <div className="flex items-center justify-between mb-4">

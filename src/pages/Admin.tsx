@@ -6,14 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { QRCodeSVG } from "qrcode.react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Shield, LogOut, Check, X, Trash2, Users, MessageSquare, Star,
   Plus, Edit, Save, Mail, MailOpen, Briefcase, UserPlus, Printer,
   Eye, EyeOff, Settings, Image, Video, Link, ChevronDown, ChevronUp,
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
-  Clock, Award, Headphones, Phone, CheckCircle, AlertCircle
+  Clock, Award, Headphones, Phone, CheckCircle, AlertCircle, PauseCircle,
+  PlayCircle, FileText, User
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -34,7 +35,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [tab, setTab] = useState<TabType>("services");
-  const [empFilter, setEmpFilter] = useState<"all" | "active" | "released">("all");
+  const [empFilter, setEmpFilter] = useState<"all" | "active" | "released" | "suspended">("all");
 
   // Data states
   const [services, setServices] = useState<any[]>([]);
@@ -44,15 +45,19 @@ const Admin = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [empRecords, setEmpRecords] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);
   const [editDialog, setEditDialog] = useState<TabType | null>(null);
+  const [recordDialog, setRecordDialog] = useState<string | null>(null);
+  const [newRecord, setNewRecord] = useState({ record_type: "note", title: "", description: "" });
 
   // Profile states
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
+  const [adminUser, setAdminUser] = useState<any>(null);
 
   // Print ref
   const printRef = useRef<HTMLDivElement>(null);
@@ -65,6 +70,7 @@ const Admin = () => {
       const admin = roles?.some((r: any) => r.role === "admin");
       if (!admin) { navigate("/"); return; }
       setIsAdmin(true);
+      setAdminUser(user);
       setNewEmail(user.email || "");
     };
     checkAdmin();
@@ -76,144 +82,103 @@ const Admin = () => {
   }, [isAdmin]);
 
   const fetchAll = () => {
-    fetchServices();
-    fetchWhyUs();
-    fetchPortfolio();
-    fetchTestimonials();
-    fetchMessages();
-    fetchEmployees();
-    fetchUsers();
+    fetchServices(); fetchWhyUs(); fetchPortfolio();
+    fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers();
   };
 
-  const fetchServices = async () => {
-    const { data } = await supabase.from("services").select("*").order("display_order");
-    if (data) setServices(data);
-  };
-  const fetchWhyUs = async () => {
-    const { data } = await supabase.from("why_us_cards").select("*").order("display_order");
-    if (data) setWhyUsCards(data);
-  };
-  const fetchPortfolio = async () => {
-    const { data } = await supabase.from("portfolio_works").select("*").order("display_order");
-    if (data) setPortfolioWorks(data);
-  };
-  const fetchTestimonials = async () => {
-    const { data } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false });
-    if (data) setTestimonials(data);
-  };
-  const fetchMessages = async () => {
-    const { data } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false });
-    if (data) setMessages(data);
-  };
-  const fetchEmployees = async () => {
-    const { data } = await supabase.from("employees").select("*").order("created_at", { ascending: false });
-    if (data) setEmployees(data);
-  };
-  const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
-    if (data) setUsers(data);
+  const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };
+  const fetchWhyUs = async () => { const { data } = await supabase.from("why_us_cards").select("*").order("display_order"); if (data) setWhyUsCards(data); };
+  const fetchPortfolio = async () => { const { data } = await supabase.from("portfolio_works").select("*").order("display_order"); if (data) setPortfolioWorks(data); };
+  const fetchTestimonials = async () => { const { data } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false }); if (data) setTestimonials(data); };
+  const fetchMessages = async () => { const { data } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false }); if (data) setMessages(data); };
+  const fetchEmployees = async () => { const { data } = await supabase.from("employees").select("*").order("created_at", { ascending: false }); if (data) setEmployees(data); };
+  const fetchUsers = async () => { const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }); if (data) setUsers(data); };
+
+  const fetchRecords = async (empId: string) => {
+    const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });
+    if (data) setEmpRecords(data);
   };
 
   // CRUD helpers
   const saveService = async (item: any) => {
     if (item.id) {
-      const { error } = await supabase.from("services").update({
-        icon: item.icon, title: item.title, description: item.description,
-        category: item.category, display_order: item.display_order
-      }).eq("id", item.id);
+      const { error } = await supabase.from("services").update({ icon: item.icon, title: item.title, description: item.description, category: item.category, display_order: item.display_order }).eq("id", item.id);
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     } else {
-      const { error } = await supabase.from("services").insert({
-        icon: item.icon, title: item.title, description: item.description,
-        category: item.category, display_order: item.display_order || 0
-      });
+      const { error } = await supabase.from("services").insert({ icon: item.icon, title: item.title, description: item.description, category: item.category, display_order: item.display_order || 0 });
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     }
     toast({ title: "Saved!" }); setEditDialog(null); fetchServices();
   };
 
-  const deleteService = async (id: string) => {
-    await supabase.from("services").delete().eq("id", id);
-    fetchServices();
-  };
+  const deleteService = async (id: string) => { await supabase.from("services").delete().eq("id", id); fetchServices(); };
 
   const saveWhyUs = async (item: any) => {
-    if (item.id) {
-      await supabase.from("why_us_cards").update({
-        icon: item.icon, title: item.title, description: item.description, display_order: item.display_order
-      }).eq("id", item.id);
-    } else {
-      await supabase.from("why_us_cards").insert({
-        icon: item.icon, title: item.title, description: item.description, display_order: item.display_order || 0
-      });
-    }
+    if (item.id) { await supabase.from("why_us_cards").update({ icon: item.icon, title: item.title, description: item.description, display_order: item.display_order }).eq("id", item.id); }
+    else { await supabase.from("why_us_cards").insert({ icon: item.icon, title: item.title, description: item.description, display_order: item.display_order || 0 }); }
     toast({ title: "Saved!" }); setEditDialog(null); fetchWhyUs();
   };
 
-  const deleteWhyUs = async (id: string) => {
-    await supabase.from("why_us_cards").delete().eq("id", id);
-    fetchWhyUs();
-  };
+  const deleteWhyUs = async (id: string) => { await supabase.from("why_us_cards").delete().eq("id", id); fetchWhyUs(); };
 
   const savePortfolio = async (item: any) => {
-    if (item.id) {
-      await supabase.from("portfolio_works").update({
-        title: item.title, description: item.description, image_url: item.image_url,
-        video_url: item.video_url, external_url: item.external_url, display_order: item.display_order
-      }).eq("id", item.id);
-    } else {
-      await supabase.from("portfolio_works").insert({
-        title: item.title, description: item.description, image_url: item.image_url,
-        video_url: item.video_url, external_url: item.external_url, display_order: item.display_order || 0
-      });
-    }
+    if (item.id) { await supabase.from("portfolio_works").update({ title: item.title, description: item.description, image_url: item.image_url, video_url: item.video_url, external_url: item.external_url, display_order: item.display_order }).eq("id", item.id); }
+    else { await supabase.from("portfolio_works").insert({ title: item.title, description: item.description, image_url: item.image_url, video_url: item.video_url, external_url: item.external_url, display_order: item.display_order || 0 }); }
     toast({ title: "Saved!" }); setEditDialog(null); fetchPortfolio();
   };
 
-  const deletePortfolio = async (id: string) => {
-    await supabase.from("portfolio_works").delete().eq("id", id);
-    fetchPortfolio();
-  };
+  const deletePortfolio = async (id: string) => { await supabase.from("portfolio_works").delete().eq("id", id); fetchPortfolio(); };
 
-  const toggleApproval = async (id: string, current: boolean) => {
-    await supabase.from("testimonials").update({ approved: !current }).eq("id", id);
-    setTestimonials(prev => prev.map(t => t.id === id ? { ...t, approved: !current } : t));
-  };
+  const toggleApproval = async (id: string, current: boolean) => { await supabase.from("testimonials").update({ approved: !current }).eq("id", id); setTestimonials(prev => prev.map(t => t.id === id ? { ...t, approved: !current } : t)); };
+  const deleteTestimonial = async (id: string) => { await supabase.from("testimonials").delete().eq("id", id); setTestimonials(prev => prev.filter(t => t.id !== id)); };
 
-  const deleteTestimonial = async (id: string) => {
-    await supabase.from("testimonials").delete().eq("id", id);
-    setTestimonials(prev => prev.filter(t => t.id !== id));
-  };
-
-  const toggleRead = async (id: string, current: boolean) => {
-    await supabase.from("contact_messages").update({ is_read: !current }).eq("id", id);
-    setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: !current } : m));
-  };
-
-  const deleteMessage = async (id: string) => {
-    await supabase.from("contact_messages").delete().eq("id", id);
-    setMessages(prev => prev.filter(m => m.id !== id));
-  };
+  const toggleRead = async (id: string, current: boolean) => { await supabase.from("contact_messages").update({ is_read: !current }).eq("id", id); setMessages(prev => prev.map(m => m.id === id ? { ...m, is_read: !current } : m)); };
+  const deleteMessage = async (id: string) => { await supabase.from("contact_messages").delete().eq("id", id); setMessages(prev => prev.filter(m => m.id !== id)); };
 
   const saveEmployee = async (item: any) => {
     if (item.id) {
       await supabase.from("employees").update({
         name: item.name, role: item.role, phone: item.phone, email: item.email,
         photo_url: item.photo_url, is_active: item.is_active,
-        released_at: item.is_active ? null : new Date().toISOString()
+        released_at: item.is_active ? null : new Date().toISOString(),
+        suspended_at: null
       }).eq("id", item.id);
     } else {
-      await supabase.from("employees").insert({
-        name: item.name, role: item.role, phone: item.phone, email: item.email,
-        photo_url: item.photo_url
-      });
+      await supabase.from("employees").insert({ name: item.name, role: item.role, phone: item.phone, email: item.email, photo_url: item.photo_url });
     }
     toast({ title: "Saved!" }); setEditDialog(null); fetchEmployees();
   };
 
   const releaseEmployee = async (id: string) => {
-    await supabase.from("employees").update({ is_active: false, released_at: new Date().toISOString() }).eq("id", id);
+    await supabase.from("employees").update({ is_active: false, released_at: new Date().toISOString(), suspended_at: null }).eq("id", id);
     fetchEmployees();
+  };
+
+  const suspendEmployee = async (id: string) => {
+    await supabase.from("employees").update({ is_active: false, suspended_at: new Date().toISOString() }).eq("id", id);
+    fetchEmployees();
+  };
+
+  const reinstateEmployee = async (id: string) => {
+    await supabase.from("employees").update({ is_active: true, suspended_at: null, released_at: null }).eq("id", id);
+    fetchEmployees();
+  };
+
+  const addRecord = async (empId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("employee_records").insert({
+      employee_id: empId, record_type: newRecord.record_type,
+      title: newRecord.title, description: newRecord.description,
+      recorded_by: user?.id
+    });
+    toast({ title: "Record added!" });
+    setNewRecord({ record_type: "note", title: "", description: "" });
+    fetchRecords(empId);
+  };
+
+  const deleteRecord = async (recId: string, empId: string) => {
+    await supabase.from("employee_records").delete().eq("id", recId);
+    fetchRecords(empId);
   };
 
   const handleImageUpload = async (file: File) => {
@@ -228,79 +193,33 @@ const Admin = () => {
   const updateProfile = async () => {
     setProfileLoading(true);
     try {
-      if (newPassword) {
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        if (error) throw error;
-      }
-      if (newEmail) {
-        const { error } = await supabase.auth.updateUser({ email: newEmail });
-        if (error) throw error;
-      }
-      toast({ title: "Profile updated!" });
-      setNewPassword("");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setProfileLoading(false);
-    }
+      if (newPassword) { const { error } = await supabase.auth.updateUser({ password: newPassword }); if (error) throw error; }
+      if (newEmail) { const { error } = await supabase.auth.updateUser({ email: newEmail }); if (error) throw error; }
+      toast({ title: "Profile updated!" }); setNewPassword("");
+    } catch (err: any) { toast({ title: "Error", description: err.message, variant: "destructive" }); }
+    finally { setProfileLoading(false); }
   };
 
   const printEmployeeCard = (emp: any) => {
     const verifyUrl = `${window.location.origin}/verify/${emp.qr_code}`;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html><head><title>Employee ID - ${emp.name}</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
-        .card { width: 340px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; overflow: hidden; color: white; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .header { background: linear-gradient(135deg, #3b82f6, #2563eb); padding: 16px; text-align: center; }
-        .header h2 { font-size: 18px; font-weight: bold; }
-        .header p { font-size: 10px; opacity: 0.8; margin-top: 2px; }
-        .body { padding: 24px; text-align: center; }
-        .photo { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #3b82f6; margin: 0 auto 12px; background: #334155; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .photo img { width: 100%; height: 100%; object-fit: cover; }
-        .name { font-size: 20px; font-weight: bold; }
-        .role { color: #3b82f6; font-size: 14px; margin: 4px 0 16px; }
-        .details { font-size: 12px; color: #94a3b8; line-height: 1.8; }
-        .qr { margin: 16px auto 0; background: white; padding: 8px; border-radius: 8px; display: inline-block; }
-        .footer { text-align: center; padding: 12px; font-size: 9px; color: #64748b; border-top: 1px solid #334155; }
-        @media print { body { background: none; } .card { box-shadow: none; } }
-      </style></head><body>
-      <div class="card">
-        <div class="header"><h2>🛡️ Triple A Tech Solutions</h2><p>Security & Technology</p></div>
-        <div class="body">
-          <div class="photo">${emp.photo_url ? `<img src="${emp.photo_url}" />` : "👤"}</div>
-          <div class="name">${emp.name}</div>
-          <div class="role">${emp.role}</div>
-          <div class="details">
-            ${emp.phone ? `📞 ${emp.phone}<br/>` : ""}
-            ${emp.email ? `✉️ ${emp.email}<br/>` : ""}
-            ID: ${emp.qr_code.slice(0, 8).toUpperCase()}
-          </div>
-          <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(verifyUrl)}" width="120" height="120" /></div>
-        </div>
-        <div class="footer">Scan QR code to verify employee · ${new Date().getFullYear()}</div>
-      </div>
-      <script>setTimeout(() => window.print(), 500);</script>
-      </body></html>
-    `);
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Employee ID - ${emp.name}</title>
+      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f0f0}.card{width:340px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;overflow:hidden;color:#fff;box-shadow:0 20px 40px rgba(0,0,0,.3)}.header{background:linear-gradient(135deg,#3b82f6,#2563eb);padding:16px;text-align:center}.header h2{font-size:18px;font-weight:700}.header p{font-size:10px;opacity:.8;margin-top:2px}.body{padding:24px;text-align:center}.photo{width:80px;height:80px;border-radius:50%;border:3px solid #3b82f6;margin:0 auto 12px;background:#334155;display:flex;align-items:center;justify-content:center;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover}.name{font-size:20px;font-weight:700}.role{color:#3b82f6;font-size:14px;margin:4px 0 16px}.details{font-size:12px;color:#94a3b8;line-height:1.8}.qr{margin:16px auto 0;background:#fff;padding:8px;border-radius:8px;display:inline-block}.footer{text-align:center;padding:12px;font-size:9px;color:#64748b;border-top:1px solid #334155}@media print{body{background:none}.card{box-shadow:none}}</style></head><body>
+      <div class="card"><div class="header"><h2>🛡️ Triple A Tech Solutions</h2><p>Security & Technology</p></div>
+      <div class="body"><div class="photo">${emp.photo_url ? `<img src="${emp.photo_url}" />` : "👤"}</div>
+      <div class="name">${emp.name}</div><div class="role">${emp.role}</div>
+      <div class="details">${emp.phone ? `📞 ${emp.phone}<br/>` : ""}${emp.email ? `✉️ ${emp.email}<br/>` : ""}ID: ${emp.qr_code.slice(0, 8).toUpperCase()}</div>
+      <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(verifyUrl)}" width="120" height="120" /></div></div>
+      <div class="footer">Scan QR code to verify employee · ${new Date().getFullYear()}</div></div>
+      <script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
     printWindow.document.close();
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  const handleSignOut = async () => { await supabase.auth.signOut(); navigate("/"); };
 
   if (isAdmin === null) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-primary font-display">Verifying access...</div>
-      </div>
-    );
+    return <div className="min-h-screen bg-background flex items-center justify-center"><div className="animate-pulse text-primary font-display">Verifying access...</div></div>;
   }
 
   const unreadMessages = messages.filter(m => !m.is_read).length;
@@ -325,44 +244,58 @@ const Admin = () => {
     </div>
   );
 
+  const getEmpStatus = (emp: any) => {
+    if (emp.is_active) return "active";
+    if (emp.suspended_at && !emp.released_at) return "suspended";
+    return "released";
+  };
+
+  const filteredEmployees = empFilter === "all" ? employees
+    : empFilter === "active" ? employees.filter(e => e.is_active)
+    : empFilter === "suspended" ? employees.filter(e => !e.is_active && e.suspended_at && !e.released_at)
+    : employees.filter(e => !e.is_active && e.released_at);
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card sticky top-0 z-40">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Top header */}
+      <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="container px-4 flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
-            <span className="font-display font-bold">Admin</span>
+          <div className="flex items-center gap-3">
+            {/* Admin avatar */}
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/30">
+              <User className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" />
+              <span className="font-display font-bold">Admin</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")}>View Site</Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-1" /> Sign Out
-            </Button>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}><LogOut className="w-4 h-4 mr-1" /> Sign Out</Button>
           </div>
         </div>
       </header>
 
-      <div className="container px-4 py-6">
-        {/* Tab bar */}
-        <div className="flex gap-1.5 mb-6 overflow-x-auto pb-2">
-          {tabs.map(t => (
-            <Button
-              key={t.key}
-              variant={tab === t.key ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTab(t.key)}
-              className="shrink-0 relative"
-            >
-              <t.icon className="w-4 h-4 mr-1" />
-              {t.label}
-              {t.badge && t.badge > 0 && (
-                <span className="ml-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
-                  {t.badge}
-                </span>
-              )}
-            </Button>
-          ))}
+      {/* Sticky tab bar */}
+      <div className="sticky top-14 z-40 bg-background border-b border-border">
+        <div className="container px-4 py-2">
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {tabs.map(t => (
+              <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" onClick={() => setTab(t.key)} className="shrink-0 relative">
+                <t.icon className="w-4 h-4 mr-1" />
+                {t.label}
+                {t.badge && t.badge > 0 && (
+                  <span className="ml-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">{t.badge}</span>
+                )}
+              </Button>
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* Content area */}
+      <div className="container px-4 py-6 flex-1">
 
         {/* SERVICES TAB */}
         {tab === "services" && (
@@ -373,30 +306,26 @@ const Admin = () => {
                 <Plus className="w-4 h-4 mr-1" /> Add Service
               </Button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {services.map(s => {
                 const Icon = iconMap[s.icon] || Shield;
                 return (
                   <div key={s.id} className="p-4 rounded-xl border border-border bg-card flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5 text-primary" />
-                      <div>
-                        <p className="font-semibold text-sm">{s.title}</p>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon className="w-5 h-5 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">{s.title}</p>
                         <p className="text-xs text-muted-foreground">{s.category} · Order: {s.display_order}</p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(s); setEditDialog("services"); }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteService(s.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(s); setEditDialog("services"); }}><Edit className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteService(s.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
                 );
               })}
-              {services.length === 0 && <p className="text-muted-foreground text-sm">No services yet. Add your first service!</p>}
+              {services.length === 0 && <p className="text-muted-foreground text-sm">No services yet.</p>}
             </div>
           </div>
         )}
@@ -410,25 +339,21 @@ const Admin = () => {
                 <Plus className="w-4 h-4 mr-1" /> Add Card
               </Button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {whyUsCards.map(c => {
                 const Icon = iconMap[c.icon] || Star;
                 return (
                   <div key={c.id} className="p-4 rounded-xl border border-border bg-card flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5 text-primary" />
-                      <div>
-                        <p className="font-semibold text-sm">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">{c.description.slice(0, 60)}...</p>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon className="w-5 h-5 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">{c.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{c.description.slice(0, 60)}...</p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(c); setEditDialog("whyus"); }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteWhyUs(c.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(c); setEditDialog("whyus"); }}><Edit className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteWhyUs(c.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
                 );
@@ -446,7 +371,7 @@ const Admin = () => {
                 <Plus className="w-4 h-4 mr-1" /> Add Work
               </Button>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {portfolioWorks.map(w => (
                 <div key={w.id} className="rounded-xl border border-border bg-card overflow-hidden">
                   {w.image_url && <img src={w.image_url} alt={w.title} className="w-full h-40 object-cover" />}
@@ -458,12 +383,8 @@ const Admin = () => {
                       {w.external_url && <span className="text-xs text-primary flex items-center gap-1"><Link className="w-3 h-3" /> URL</span>}
                     </div>
                     <div className="flex gap-1 mt-3">
-                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(w); setEditDialog("portfolio"); }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deletePortfolio(w.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(w); setEditDialog("portfolio"); }}><Edit className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deletePortfolio(w.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
                 </div>
@@ -476,7 +397,7 @@ const Admin = () => {
         {tab === "testimonials" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Testimonials ({testimonials.length})</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {testimonials.map(t => (
                 <div key={t.id} className={`p-4 rounded-xl border ${t.approved ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
                   <div className="flex items-start justify-between">
@@ -489,9 +410,7 @@ const Admin = () => {
                         </span>
                       </div>
                       <div className="flex gap-0.5 mb-2">
-                        {Array.from({ length: t.rating || 0 }).map((_, i) => (
-                          <Star key={i} className="w-3 h-3 fill-primary text-primary" />
-                        ))}
+                        {Array.from({ length: t.rating || 0 }).map((_, i) => <Star key={i} className="w-3 h-3 fill-primary text-primary" />)}
                       </div>
                       <p className="text-sm text-muted-foreground">{t.content}</p>
                     </div>
@@ -499,9 +418,7 @@ const Admin = () => {
                       <Button size="sm" variant="ghost" onClick={() => toggleApproval(t.id, t.approved)}>
                         {t.approved ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteTestimonial(t.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteTestimonial(t.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
                 </div>
@@ -516,15 +433,15 @@ const Admin = () => {
             <h2 className="font-display font-bold text-lg mb-4">
               Messages ({messages.length}) {unreadMessages > 0 && <span className="text-destructive">· {unreadMessages} unread</span>}
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {messages.map(m => (
                 <div key={m.id} className={`p-4 rounded-xl border ${m.is_read ? "border-border bg-card" : "border-primary/30 bg-primary/5"}`}>
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        {m.is_read ? <MailOpen className="w-4 h-4 text-muted-foreground" /> : <Mail className="w-4 h-4 text-primary" />}
+                        {m.is_read ? <MailOpen className="w-4 h-4 text-muted-foreground shrink-0" /> : <Mail className="w-4 h-4 text-primary shrink-0" />}
                         <p className="font-semibold text-sm">{m.name}</p>
-                        <span className="text-xs text-muted-foreground">{m.email}</span>
+                        <span className="text-xs text-muted-foreground truncate">{m.email}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mb-1">📞 {m.phone}</p>
                       <p className="text-sm text-muted-foreground">{m.message}</p>
@@ -534,9 +451,7 @@ const Admin = () => {
                       <Button size="sm" variant="ghost" onClick={() => toggleRead(m.id, m.is_read)}>
                         {m.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMessage(m.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMessage(m.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
                 </div>
@@ -547,74 +462,97 @@ const Admin = () => {
         )}
 
         {/* EMPLOYEES TAB */}
-        {tab === "employees" && (() => {
-          const filtered = empFilter === "active" ? employees.filter(e => e.is_active) : empFilter === "released" ? employees.filter(e => !e.is_active) : employees;
-          return (
+        {tab === "employees" && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-bold text-lg">Employees ({filtered.length})</h2>
+              <h2 className="font-display font-bold text-lg">Employees ({filteredEmployees.length})</h2>
               <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", phone: "", email: "", photo_url: "", is_active: true }); setEditDialog("employees"); }}>
                 <UserPlus className="w-4 h-4 mr-1" /> Add Employee
               </Button>
             </div>
-            <div className="flex gap-2 mb-4">
-              {[{ key: "all", label: "All" }, { key: "active", label: "Active" }, { key: "released", label: "Released" }].map(f => (
-                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key as "all" | "active" | "released")} className="rounded-xl">
-                  {f.label} ({f.key === "all" ? employees.length : f.key === "active" ? employees.filter(e => e.is_active).length : employees.filter(e => !e.is_active).length})
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {([
+                { key: "all", label: "All", count: employees.length },
+                { key: "active", label: "Active", count: employees.filter(e => e.is_active).length },
+                { key: "suspended", label: "Suspended", count: employees.filter(e => !e.is_active && e.suspended_at && !e.released_at).length },
+                { key: "released", label: "Released", count: employees.filter(e => !e.is_active && e.released_at).length },
+              ] as const).map(f => (
+                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key)} className="rounded-xl">
+                  {f.label} ({f.count})
                 </Button>
               ))}
             </div>
-            <div className="space-y-3">
-              {filtered.map(emp => (
-                <div key={emp.id} className={`p-4 rounded-xl border ${emp.is_active ? "border-border bg-card" : "border-destructive/30 bg-destructive/5"}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {emp.photo_url ? (
-                        <img src={emp.photo_url} alt={emp.name} className="w-10 h-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-primary" />
+            <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+              {filteredEmployees.map(emp => {
+                const status = getEmpStatus(emp);
+                return (
+                  <div key={emp.id} className={`p-4 rounded-xl border ${
+                    status === "active" ? "border-border bg-card" :
+                    status === "suspended" ? "border-yellow-500/30 bg-yellow-500/5" :
+                    "border-destructive/30 bg-destructive/5"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {emp.photo_url ? (
+                          <img src={emp.photo_url} alt={emp.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><Users className="w-5 h-5 text-primary" /></div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm truncate">{emp.name}</p>
+                          <p className="text-xs text-muted-foreground">{emp.role}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            status === "active" ? "bg-primary/20 text-primary" :
+                            status === "suspended" ? "bg-yellow-500/20 text-yellow-600" :
+                            "bg-destructive/20 text-destructive"
+                          }`}>
+                            {status === "active" ? "Active" : status === "suspended" ? "Suspended" : "Released"}
+                          </span>
+                          {status === "released" && emp.released_at && (
+                            <p className="text-xs text-destructive mt-1">Released: {new Date(emp.released_at).toLocaleString()}</p>
+                          )}
+                          {status === "suspended" && emp.suspended_at && (
+                            <p className="text-xs text-yellow-600 mt-1">Suspended: {new Date(emp.suspended_at).toLocaleString()}</p>
+                          )}
                         </div>
-                      )}
-                      <div>
-                        <p className="font-semibold text-sm">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.role}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${emp.is_active ? "bg-primary/20 text-primary" : "bg-destructive/20 text-destructive"}`}>
-                          {emp.is_active ? "Active" : "Released"}
-                        </span>
+                      </div>
+                      <div className="flex gap-1 shrink-0 flex-wrap justify-end">
+                        <Button size="sm" variant="ghost" onClick={() => printEmployeeCard(emp)} title="Print ID Card"><Printer className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setEditItem(emp); setEditDialog("employees"); }}><Edit className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setRecordDialog(emp.id); fetchRecords(emp.id); }} title="Records"><FileText className="w-4 h-4" /></Button>
+                        {emp.is_active && (
+                          <>
+                            <Button size="sm" variant="ghost" className="text-yellow-600" onClick={() => suspendEmployee(emp.id)} title="Suspend">
+                              <PauseCircle className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => releaseEmployee(emp.id)} title="Release">
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        {!emp.is_active && (
+                          <Button size="sm" variant="ghost" className="text-primary" onClick={() => reinstateEmployee(emp.id)} title="Reinstate">
+                            <PlayCircle className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => printEmployeeCard(emp)} title="Print ID Card">
-                        <Printer className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(emp); setEditDialog("employees"); }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      {emp.is_active && (
-                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => releaseEmployee(emp.id)} title="Release Employee">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
+                    <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>QR: {emp.qr_code.slice(0, 8)}...</span>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>QR: {emp.qr_code.slice(0, 8)}...</span>
-                    <span>Verify: {window.location.origin}/verify/{emp.qr_code}</span>
-                  </div>
-                </div>
-              ))}
-              {filtered.length === 0 && <p className="text-center text-muted-foreground py-8">No {empFilter} employees found.</p>}
+                );
+              })}
+              {filteredEmployees.length === 0 && <p className="text-center text-muted-foreground py-8">No {empFilter} employees found.</p>}
             </div>
           </div>
-          );
-        })()}
+        )}
 
         {/* USERS TAB */}
         {tab === "users" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Users ({users.length})</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {users.map(u => (
                 <div key={u.id} className="p-4 rounded-xl border border-border bg-card flex items-center justify-between">
                   <div>
@@ -632,6 +570,12 @@ const Admin = () => {
           <div className="max-w-md">
             <h2 className="font-display font-bold text-lg mb-4">Admin Profile</h2>
             <div className="space-y-4 p-6 rounded-xl border border-border bg-card">
+              <div className="flex justify-center">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/30">
+                  <User className="w-10 h-10 text-primary" />
+                </div>
+              </div>
+              <p className="text-center text-sm text-muted-foreground">{adminUser?.email}</p>
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input value={newEmail} onChange={e => setNewEmail(e.target.value)} className="rounded-xl" />
@@ -649,109 +593,68 @@ const Admin = () => {
       </div>
 
       {/* EDIT DIALOGS */}
-      {/* Service Dialog */}
       <Dialog open={editDialog === "services"} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Service</DialogTitle></DialogHeader>
           {editItem && (
             <div className="space-y-4">
               {renderIconSelect(editItem.icon, v => setEditItem({ ...editItem, icon: v }))}
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" />
-              </div>
+              <div className="space-y-2"><Label>Title</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" /></div>
               <div className="space-y-2">
                 <Label>Category</Label>
                 <select value={editItem.category} onChange={e => setEditItem({ ...editItem, category: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                  <option value="physical">Physical Security</option>
-                  <option value="cyber">Cyber Security</option>
+                  <option value="physical">Physical Security</option><option value="cyber">Cyber Security</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <Label>Display Order</Label>
-                <Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" />
-              </div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
               <Button onClick={() => saveService(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Why Us Dialog */}
       <Dialog open={editDialog === "whyus"} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Why Us Card</DialogTitle></DialogHeader>
           {editItem && (
             <div className="space-y-4">
               {renderIconSelect(editItem.icon, v => setEditItem({ ...editItem, icon: v }))}
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Display Order</Label>
-                <Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" />
-              </div>
+              <div className="space-y-2"><Label>Title</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
               <Button onClick={() => saveWhyUs(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Portfolio Dialog */}
       <Dialog open={editDialog === "portfolio"} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Portfolio Work</DialogTitle></DialogHeader>
           {editItem && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" />
-              </div>
+              <div className="space-y-2"><Label>Title</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" /></div>
               <div className="space-y-2">
                 <Label>Image</Label>
                 <Input type="file" accept="image/*" onChange={async e => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    const url = await handleImageUpload(file);
-                    if (url) setEditItem({ ...editItem, image_url: url });
-                  }
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
                 }} className="rounded-xl" />
                 {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
               </div>
-              <div className="space-y-2">
-                <Label>Video URL (YouTube/Vimeo)</Label>
-                <Input value={editItem.video_url || ""} onChange={e => setEditItem({ ...editItem, video_url: e.target.value })} placeholder="https://youtube.com/..." className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>External URL</Label>
-                <Input value={editItem.external_url || ""} onChange={e => setEditItem({ ...editItem, external_url: e.target.value })} placeholder="https://..." className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Display Order</Label>
-                <Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" />
-              </div>
+              <div className="space-y-2"><Label>Video URL</Label><Input value={editItem.video_url || ""} onChange={e => setEditItem({ ...editItem, video_url: e.target.value })} placeholder="https://youtube.com/..." className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>External URL</Label><Input value={editItem.external_url || ""} onChange={e => setEditItem({ ...editItem, external_url: e.target.value })} placeholder="https://..." className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
               <Button onClick={() => savePortfolio(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Employee Dialog */}
       <Dialog open={editDialog === "employees"} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Employee</DialogTitle></DialogHeader>
           {editItem && (
             <div className="space-y-4">
@@ -760,11 +663,8 @@ const Admin = () => {
                 <Input value={editItem.name} onChange={e => {
                   const name = e.target.value;
                   const parts = name.trim().split(/\s+/);
-                  const autoEmail = parts.length >= 2
-                    ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.co.ke`
-                    : parts.length === 1 && parts[0]
-                    ? `${parts[0].toLowerCase()}@tripleaatech.co.ke`
-                    : "";
+                  const autoEmail = parts.length >= 2 ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.co.ke`
+                    : parts.length === 1 && parts[0] ? `${parts[0].toLowerCase()}@tripleaatech.co.ke` : "";
                   setEditItem({ ...editItem, name, email: autoEmail });
                 }} className="rounded-xl" />
               </div>
@@ -787,10 +687,7 @@ const Admin = () => {
                   <option value="Intern">Intern</option>
                 </select>
               </div>
-              <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={editItem.phone || ""} onChange={e => setEditItem({ ...editItem, phone: e.target.value })} className="rounded-xl" />
-              </div>
+              <div className="space-y-2"><Label>Phone</Label><Input value={editItem.phone || ""} onChange={e => setEditItem({ ...editItem, phone: e.target.value })} className="rounded-xl" /></div>
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input type="email" value={editItem.email || ""} readOnly className="rounded-xl bg-muted cursor-not-allowed" />
@@ -800,10 +697,7 @@ const Admin = () => {
                 <Label>Photo</Label>
                 <Input type="file" accept="image/*" onChange={async e => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    const url = await handleImageUpload(file);
-                    if (url) setEditItem({ ...editItem, photo_url: url });
-                  }
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); }
                 }} className="rounded-xl" />
                 {editItem.photo_url && <img src={editItem.photo_url} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2" />}
               </div>
@@ -816,6 +710,66 @@ const Admin = () => {
               <Button onClick={() => saveEmployee(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Employee Records Dialog */}
+      <Dialog open={!!recordDialog} onOpenChange={() => setRecordDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Employee Records</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Add new record form */}
+            <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+              <p className="font-semibold text-sm">Add New Record</p>
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <select value={newRecord.record_type} onChange={e => setNewRecord({ ...newRecord, record_type: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                  <option value="note">Note</option>
+                  <option value="warning">Warning</option>
+                  <option value="incident">Incident</option>
+                  <option value="commendation">Commendation</option>
+                  <option value="disciplinary">Disciplinary</option>
+                </select>
+              </div>
+              <div className="space-y-2"><Label>Title</Label><Input value={newRecord.title} onChange={e => setNewRecord({ ...newRecord, title: e.target.value })} placeholder="Brief title..." className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea value={newRecord.description} onChange={e => setNewRecord({ ...newRecord, description: e.target.value })} placeholder="Details..." className="rounded-xl" /></div>
+              <Button size="sm" onClick={() => recordDialog && addRecord(recordDialog)} disabled={!newRecord.title.trim()}>
+                <Plus className="w-4 h-4 mr-1" /> Add Record
+              </Button>
+            </div>
+
+            {/* Existing records */}
+            <div className="space-y-2">
+              {empRecords.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">No records yet.</p>}
+              {empRecords.map(r => (
+                <div key={r.id} className={`p-3 rounded-lg border text-sm ${
+                  r.record_type === "warning" ? "border-yellow-500/30 bg-yellow-500/5" :
+                  r.record_type === "incident" || r.record_type === "disciplinary" ? "border-destructive/30 bg-destructive/5" :
+                  r.record_type === "commendation" ? "border-primary/30 bg-primary/5" :
+                  "border-border bg-card"
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        r.record_type === "warning" ? "bg-yellow-500/20 text-yellow-600" :
+                        r.record_type === "incident" || r.record_type === "disciplinary" ? "bg-destructive/20 text-destructive" :
+                        r.record_type === "commendation" ? "bg-primary/20 text-primary" :
+                        "bg-muted text-muted-foreground"
+                      }`}>{r.record_type}</span>
+                      <p className="font-semibold mt-1">{r.title}</p>
+                      {r.description && <p className="text-muted-foreground mt-1">{r.description}</p>}
+                      <p className="text-xs text-muted-foreground mt-2">{new Date(r.created_at).toLocaleString()}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => recordDialog && deleteRecord(r.id, recordDialog)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

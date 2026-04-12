@@ -50,7 +50,7 @@ const Navbar = () => {
   const goTo = (path: string) => {
     setOpen(false);
     navigate(path);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const handleNavClick = (item: typeof navItems[0]) => {

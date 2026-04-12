@@ -11,7 +11,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 const Index = () => (
   <>
     <Navbar />
-    <main>
+    <main className="pt-16">
       <HeroSection />
       <ServicesSection />
       <WhyUsSection />

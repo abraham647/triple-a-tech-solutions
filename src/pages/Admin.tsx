@@ -745,11 +745,35 @@ const Admin = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Full Name</Label>
-                <Input value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} className="rounded-xl" />
+                <Input value={editItem.name} onChange={e => {
+                  const name = e.target.value;
+                  const parts = name.trim().split(/\s+/);
+                  const autoEmail = parts.length >= 2
+                    ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.co.ke`
+                    : parts.length === 1 && parts[0]
+                    ? `${parts[0].toLowerCase()}@tripleaatech.co.ke`
+                    : "";
+                  setEditItem({ ...editItem, name, email: autoEmail });
+                }} className="rounded-xl" />
               </div>
               <div className="space-y-2">
                 <Label>Role / Position</Label>
-                <Input value={editItem.role} onChange={e => setEditItem({ ...editItem, role: e.target.value })} className="rounded-xl" />
+                <select value={editItem.role} onChange={e => setEditItem({ ...editItem, role: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                  <option value="">Select a role...</option>
+                  <option value="Security Guard">Security Guard</option>
+                  <option value="Security Supervisor">Security Supervisor</option>
+                  <option value="CCTV Operator">CCTV Operator</option>
+                  <option value="IT Technician">IT Technician</option>
+                  <option value="Network Engineer">Network Engineer</option>
+                  <option value="Cyber Security Analyst">Cyber Security Analyst</option>
+                  <option value="Project Manager">Project Manager</option>
+                  <option value="Operations Manager">Operations Manager</option>
+                  <option value="Field Technician">Field Technician</option>
+                  <option value="Driver">Driver</option>
+                  <option value="Admin Assistant">Admin Assistant</option>
+                  <option value="Sales Representative">Sales Representative</option>
+                  <option value="Intern">Intern</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
@@ -757,7 +781,8 @@ const Admin = () => {
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input type="email" value={editItem.email || ""} onChange={e => setEditItem({ ...editItem, email: e.target.value })} className="rounded-xl" />
+                <Input type="email" value={editItem.email || ""} readOnly className="rounded-xl bg-muted cursor-not-allowed" />
+                <p className="text-xs text-muted-foreground">Auto-generated from name</p>
               </div>
               <div className="space-y-2">
                 <Label>Photo</Label>

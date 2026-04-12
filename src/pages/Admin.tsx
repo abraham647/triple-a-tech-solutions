@@ -546,16 +546,27 @@ const Admin = () => {
         )}
 
         {/* EMPLOYEES TAB */}
-        {tab === "employees" && (
+        {tab === "employees" && (() => {
+          const empFilter = (window as any).__empFilter || "all";
+          const setEmpFilter = (v: string) => { (window as any).__empFilter = v; setTab("employees"); };
+          const filtered = empFilter === "active" ? employees.filter(e => e.is_active) : empFilter === "released" ? employees.filter(e => !e.is_active) : employees;
+          return (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-bold text-lg">Employees ({employees.length})</h2>
+              <h2 className="font-display font-bold text-lg">Employees ({filtered.length})</h2>
               <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", phone: "", email: "", photo_url: "", is_active: true }); setEditDialog("employees"); }}>
                 <UserPlus className="w-4 h-4 mr-1" /> Add Employee
               </Button>
             </div>
+            <div className="flex gap-2 mb-4">
+              {[{ key: "all", label: "All" }, { key: "active", label: "Active" }, { key: "released", label: "Released" }].map(f => (
+                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key)} className="rounded-xl">
+                  {f.label} ({f.key === "all" ? employees.length : f.key === "active" ? employees.filter(e => e.is_active).length : employees.filter(e => !e.is_active).length})
+                </Button>
+              ))}
+            </div>
             <div className="space-y-3">
-              {employees.map(emp => (
+              {filtered.map(emp => (
                 <div key={emp.id} className={`p-4 rounded-xl border ${emp.is_active ? "border-border bg-card" : "border-destructive/30 bg-destructive/5"}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -594,9 +605,11 @@ const Admin = () => {
                   </div>
                 </div>
               ))}
+              {filtered.length === 0 && <p className="text-center text-muted-foreground py-8">No {empFilter} employees found.</p>}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* USERS TAB */}
         {tab === "users" && (

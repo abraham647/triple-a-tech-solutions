@@ -550,7 +550,6 @@ const Admin = () => {
         {tab === "employees" && (() => {
           const filtered = empFilter === "active" ? employees.filter(e => e.is_active) : empFilter === "released" ? employees.filter(e => !e.is_active) : employees;
           return (
-          return (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-bold text-lg">Employees ({filtered.length})</h2>

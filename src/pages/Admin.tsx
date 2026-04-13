@@ -254,6 +254,7 @@ const Admin = () => {
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },
+    { key: "team", label: "Team", icon: Users },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },

@@ -853,6 +853,36 @@ const Admin = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Team Member Edit Dialog */}
+      <Dialog open={editDialog === "team"} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Team Member</DialogTitle></DialogHeader>
+          {editItem && (
+            <div className="space-y-4">
+              <div className="space-y-2"><Label>Name</Label><Input value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Role / Title</Label><Input value={editItem.role} onChange={e => setEditItem({ ...editItem, role: e.target.value })} placeholder="e.g. Co-Founder, Operations Lead" className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Bio / Message</Label><Textarea value={editItem.bio || ""} onChange={e => setEditItem({ ...editItem, bio: e.target.value })} placeholder="Short bio or personal message..." className="rounded-xl" /></div>
+              <div className="space-y-2">
+                <Label>Photo</Label>
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); }
+                }} className="rounded-xl" />
+                {editItem.photo_url && <img src={editItem.photo_url} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2" />}
+              </div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
+              {editItem.id && (
+                <div className="flex items-center gap-2">
+                  <Label>Visible on About page</Label>
+                  <input type="checkbox" checked={editItem.is_visible} onChange={e => setEditItem({ ...editItem, is_visible: e.target.checked })} />
+                </div>
+              )}
+              <Button onClick={() => saveTeamMember(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

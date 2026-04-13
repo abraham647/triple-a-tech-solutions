@@ -88,7 +88,7 @@ const Admin = () => {
 
   const fetchAll = () => {
     fetchServices(); fetchWhyUs(); fetchPortfolio();
-    fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers();
+    fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
   };
 
   const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };

@@ -579,7 +579,43 @@ const Admin = () => {
           </div>
         )}
 
-        {/* USERS TAB */}
+        {/* TEAM TAB */}
+        {tab === "team" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-lg">Team Members ({teamMembers.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", bio: "", photo_url: "", display_order: 0, is_visible: true }); setEditDialog("team"); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Member
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">These members appear on the About Us page.</p>
+            <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+              {teamMembers.map(m => (
+                <div key={m.id} className={`p-4 rounded-xl border ${m.is_visible ? "border-border bg-card" : "border-border bg-muted/50 opacity-60"} flex items-center justify-between`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {m.photo_url ? (
+                      <img src={m.photo_url} alt={m.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="w-6 h-6 text-primary" /></div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{m.name}</p>
+                      <p className="text-xs text-muted-foreground">{m.role}</p>
+                      {m.bio && <p className="text-xs text-muted-foreground truncate max-w-xs">{m.bio.slice(0, 80)}...</p>}
+                      {!m.is_visible && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(m); setEditDialog("team"); }}><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteTeamMember(m.id)}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              ))}
+              {teamMembers.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No team members yet. Add members to show on the About Us page.</p>}
+            </div>
+          </div>
+        )}
+
         {tab === "users" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Users ({users.length})</h2>

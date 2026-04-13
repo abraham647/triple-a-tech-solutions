@@ -98,6 +98,7 @@ const Admin = () => {
   const fetchMessages = async () => { const { data } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false }); if (data) setMessages(data); };
   const fetchEmployees = async () => { const { data } = await supabase.from("employees").select("*").order("created_at", { ascending: false }); if (data) setEmployees(data); };
   const fetchUsers = async () => { const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }); if (data) setUsers(data); };
+  const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
 
   const fetchRecords = async (empId: string) => {
     const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });

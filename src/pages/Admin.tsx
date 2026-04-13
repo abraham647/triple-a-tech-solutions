@@ -58,6 +58,7 @@ const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminProfile, setAdminProfile] = useState<any>(null);
 
   // Print ref
   const printRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,9 @@ const Admin = () => {
       setIsAdmin(true);
       setAdminUser(user);
       setNewEmail(user.email || "");
+      // Fetch admin profile
+      const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+      if (profile) setAdminProfile(profile);
     };
     checkAdmin();
   }, [navigate]);
@@ -200,6 +204,15 @@ const Admin = () => {
     finally { setProfileLoading(false); }
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    const url = await handleImageUpload(file);
+    if (!url || !adminUser) return;
+    const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", adminUser.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    setAdminProfile((prev: any) => ({ ...prev, avatar_url: url }));
+    toast({ title: "Profile picture updated!" });
+  };
+
   const printEmployeeCard = (emp: any) => {
     const verifyUrl = `${window.location.origin}/verify/${emp.qr_code}`;
     const printWindow = window.open("", "_blank");
@@ -263,7 +276,11 @@ const Admin = () => {
           <div className="flex items-center gap-3">
             {/* Admin avatar */}
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/30">
-              <User className="w-4 h-4 text-primary" />
+              {adminProfile?.avatar_url ? (
+                <img src={adminProfile.avatar_url} alt="Admin" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-primary" />
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -570,10 +587,24 @@ const Admin = () => {
           <div className="max-w-md">
             <h2 className="font-display font-bold text-lg mb-4">Admin Profile</h2>
             <div className="space-y-4 p-6 rounded-xl border border-border bg-card">
-              <div className="flex justify-center">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/30">
-                  <User className="w-10 h-10 text-primary" />
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative group">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/30 overflow-hidden">
+                    {adminProfile?.avatar_url ? (
+                      <img src={adminProfile.avatar_url} alt="Admin" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-10 h-10 text-primary" />
+                    )}
+                  </div>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                    }} />
+                  </label>
                 </div>
+                <p className="text-xs text-muted-foreground">Hover & click to change photo</p>
               </div>
               <p className="text-center text-sm text-muted-foreground">{adminUser?.email}</p>
               <div className="space-y-2">

@@ -73,6 +73,9 @@ const Admin = () => {
       setIsAdmin(true);
       setAdminUser(user);
       setNewEmail(user.email || "");
+      // Fetch admin profile
+      const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+      if (profile) setAdminProfile(profile);
     };
     checkAdmin();
   }, [navigate]);

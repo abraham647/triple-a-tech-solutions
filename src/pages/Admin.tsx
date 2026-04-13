@@ -47,7 +47,6 @@ const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [empRecords, setEmpRecords] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [empRecords, setEmpRecords] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);

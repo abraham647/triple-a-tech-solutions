@@ -204,6 +204,15 @@ const Admin = () => {
     finally { setProfileLoading(false); }
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    const url = await handleImageUpload(file);
+    if (!url || !adminUser) return;
+    const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", adminUser.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    setAdminProfile((prev: any) => ({ ...prev, avatar_url: url }));
+    toast({ title: "Profile picture updated!" });
+  };
+
   const printEmployeeCard = (emp: any) => {
     const verifyUrl = `${window.location.origin}/verify/${emp.qr_code}`;
     const printWindow = window.open("", "_blank");

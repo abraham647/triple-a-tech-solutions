@@ -187,6 +187,17 @@ const Admin = () => {
     fetchRecords(empId);
   };
 
+  const saveTeamMember = async (item: any) => {
+    if (item.id) {
+      await supabase.from("team_members").update({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order, is_visible: item.is_visible }).eq("id", item.id);
+    } else {
+      await supabase.from("team_members").insert({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order || 0 });
+    }
+    toast({ title: "Saved!" }); setEditDialog(null); fetchTeam();
+  };
+
+  const deleteTeamMember = async (id: string) => { await supabase.from("team_members").delete().eq("id", id); fetchTeam(); };
+
   const handleImageUpload = async (file: File) => {
     const ext = file.name.split(".").pop();
     const path = `${Date.now()}.${ext}`;

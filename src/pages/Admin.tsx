@@ -28,7 +28,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile";
+type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -66,7 +66,7 @@ const Admin = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/"); return; }
+      if (!user) { navigate("/auth"); return; }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       const admin = roles?.some((r: any) => r.role === "admin");
       if (!admin) { navigate("/"); return; }

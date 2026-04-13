@@ -28,7 +28,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile";
+type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -46,6 +46,7 @@ const Admin = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [empRecords, setEmpRecords] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);
@@ -66,7 +67,7 @@ const Admin = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/"); return; }
+      if (!user) { navigate("/auth"); return; }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       const admin = roles?.some((r: any) => r.role === "admin");
       if (!admin) { navigate("/"); return; }
@@ -87,7 +88,7 @@ const Admin = () => {
 
   const fetchAll = () => {
     fetchServices(); fetchWhyUs(); fetchPortfolio();
-    fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers();
+    fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
   };
 
   const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };
@@ -97,6 +98,7 @@ const Admin = () => {
   const fetchMessages = async () => { const { data } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false }); if (data) setMessages(data); };
   const fetchEmployees = async () => { const { data } = await supabase.from("employees").select("*").order("created_at", { ascending: false }); if (data) setEmployees(data); };
   const fetchUsers = async () => { const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }); if (data) setUsers(data); };
+  const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
 
   const fetchRecords = async (empId: string) => {
     const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });
@@ -185,6 +187,17 @@ const Admin = () => {
     fetchRecords(empId);
   };
 
+  const saveTeamMember = async (item: any) => {
+    if (item.id) {
+      await supabase.from("team_members").update({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order, is_visible: item.is_visible }).eq("id", item.id);
+    } else {
+      await supabase.from("team_members").insert({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order || 0 });
+    }
+    toast({ title: "Saved!" }); setEditDialog(null); fetchTeam();
+  };
+
+  const deleteTeamMember = async (id: string) => { await supabase.from("team_members").delete().eq("id", id); fetchTeam(); };
+
   const handleImageUpload = async (file: File) => {
     const ext = file.name.split(".").pop();
     const path = `${Date.now()}.${ext}`;
@@ -241,6 +254,7 @@ const Admin = () => {
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },
+    { key: "team", label: "Team", icon: Users },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
@@ -565,7 +579,43 @@ const Admin = () => {
           </div>
         )}
 
-        {/* USERS TAB */}
+        {/* TEAM TAB */}
+        {tab === "team" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-lg">Team Members ({teamMembers.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", bio: "", photo_url: "", display_order: 0, is_visible: true }); setEditDialog("team"); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Member
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">These members appear on the About Us page.</p>
+            <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+              {teamMembers.map(m => (
+                <div key={m.id} className={`p-4 rounded-xl border ${m.is_visible ? "border-border bg-card" : "border-border bg-muted/50 opacity-60"} flex items-center justify-between`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {m.photo_url ? (
+                      <img src={m.photo_url} alt={m.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="w-6 h-6 text-primary" /></div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{m.name}</p>
+                      <p className="text-xs text-muted-foreground">{m.role}</p>
+                      {m.bio && <p className="text-xs text-muted-foreground truncate max-w-xs">{m.bio.slice(0, 80)}...</p>}
+                      {!m.is_visible && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(m); setEditDialog("team"); }}><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteTeamMember(m.id)}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              ))}
+              {teamMembers.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No team members yet. Add members to show on the About Us page.</p>}
+            </div>
+          </div>
+        )}
+
         {tab === "users" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Users ({users.length})</h2>
@@ -801,6 +851,36 @@ const Admin = () => {
               ))}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Team Member Edit Dialog */}
+      <Dialog open={editDialog === "team"} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Team Member</DialogTitle></DialogHeader>
+          {editItem && (
+            <div className="space-y-4">
+              <div className="space-y-2"><Label>Name</Label><Input value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Role / Title</Label><Input value={editItem.role} onChange={e => setEditItem({ ...editItem, role: e.target.value })} placeholder="e.g. Co-Founder, Operations Lead" className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Bio / Message</Label><Textarea value={editItem.bio || ""} onChange={e => setEditItem({ ...editItem, bio: e.target.value })} placeholder="Short bio or personal message..." className="rounded-xl" /></div>
+              <div className="space-y-2">
+                <Label>Photo</Label>
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); }
+                }} className="rounded-xl" />
+                {editItem.photo_url && <img src={editItem.photo_url} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2" />}
+              </div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
+              {editItem.id && (
+                <div className="flex items-center gap-2">
+                  <Label>Visible on About page</Label>
+                  <input type="checkbox" checked={editItem.is_visible} onChange={e => setEditItem({ ...editItem, is_visible: e.target.checked })} />
+                </div>
+              )}
+              <Button onClick={() => saveTeamMember(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

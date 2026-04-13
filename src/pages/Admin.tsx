@@ -58,6 +58,7 @@ const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [adminProfile, setAdminProfile] = useState<any>(null);
 
   // Print ref
   const printRef = useRef<HTMLDivElement>(null);

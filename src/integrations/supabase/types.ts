@@ -100,6 +100,7 @@ export type Database = {
           role: string
           suspended_at: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -115,6 +116,7 @@ export type Database = {
           role: string
           suspended_at?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -130,6 +132,7 @@ export type Database = {
           role?: string
           suspended_at?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -166,6 +169,95 @@ export type Database = {
           title?: string
           updated_at?: string
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      product_inquiries: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          message: string
+          product_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string
+          id?: string
+          message?: string
+          product_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          message?: string
+          product_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inquiries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price: number
+          stock_status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price?: number
+          stock_status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price?: number
+          stock_status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -232,6 +324,7 @@ export type Database = {
       team_members: {
         Row: {
           bio: string | null
+          category: string
           created_at: string
           display_order: number
           id: string
@@ -243,6 +336,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          category?: string
           created_at?: string
           display_order?: number
           id?: string
@@ -254,6 +348,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          category?: string
           created_at?: string
           display_order?: number
           id?: string
@@ -363,7 +458,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "manager"
+        | "sales_agent"
+        | "technician"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -491,7 +592,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "manager",
+        "sales_agent",
+        "technician",
+      ],
     },
   },
 } as const

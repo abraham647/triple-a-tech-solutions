@@ -7,11 +7,15 @@ import founderImg from "@/assets/founder.jpg";
 
 const About = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [leaders, setLeaders] = useState<any[]>([]);
 
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase.from("team_members").select("*").eq("is_visible", true).order("display_order");
-      if (data) setTeamMembers(data);
+      if (data) {
+        setLeaders(data.filter((m: any) => m.category === "leadership"));
+        setTeamMembers(data.filter((m: any) => m.category !== "leadership"));
+      }
     };
     fetch();
   }, []);
@@ -84,10 +88,39 @@ const About = () => {
           </div>
         </section>
 
+        {/* Leadership Team - from DB */}
+        {leaders.length > 0 && (
+          <section className="py-16 relative">
+            <div className="absolute inset-0 bg-secondary/30" />
+            <div className="container px-4 relative z-10">
+              <div className="text-center mb-12">
+                <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Leadership</p>
+                <h2 className="text-3xl md:text-4xl font-bold font-display">Our Leaders</h2>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {leaders.map(m => (
+                  <div key={m.id} className="text-center p-6 rounded-xl bg-card border border-border hover:border-primary/20 transition-all">
+                    <div className="w-24 h-24 rounded-full mx-auto mb-4 overflow-hidden border-2 border-primary/20">
+                      {m.photo_url ? (
+                        <img src={m.photo_url} alt={m.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-primary/10 flex items-center justify-center"><User className="w-10 h-10 text-primary" /></div>
+                      )}
+                    </div>
+                    <h3 className="font-display font-bold text-lg">{m.name}</h3>
+                    <p className="text-primary text-sm mb-3">{m.role}</p>
+                    {m.bio && <p className="text-sm text-muted-foreground leading-relaxed">{m.bio}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Team Members - dynamic from DB */}
         {teamMembers.length > 0 && (
           <section className="py-16 relative">
-            <div className="absolute inset-0 bg-secondary/30" />
+            {leaders.length === 0 && <div className="absolute inset-0 bg-secondary/30" />}
             <div className="container px-4 relative z-10">
               <div className="text-center mb-12">
                 <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Our People</p>
@@ -115,7 +148,7 @@ const About = () => {
 
         {/* Values */}
         <section className="py-16 relative">
-          {teamMembers.length === 0 && <div className="absolute inset-0 bg-secondary/30" />}
+          {teamMembers.length === 0 && leaders.length === 0 && <div className="absolute inset-0 bg-secondary/30" />}
           <div className="container px-4 relative z-10">
             <div className="text-center mb-12">
               <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">What Drives Us</p>

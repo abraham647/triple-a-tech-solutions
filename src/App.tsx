@@ -12,6 +12,8 @@ import EmployeeVerify from "./pages/EmployeeVerify";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Careers from "./pages/Careers";
+import Products from "./pages/Products";
+import StaffDashboard from "./pages/StaffDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

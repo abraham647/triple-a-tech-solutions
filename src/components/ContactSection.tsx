@@ -17,7 +17,7 @@ const contactSchema = z.object({
 
 const contactInfo = [
   { icon: Phone, title: "Call Us", value: "0112 860 205", href: "tel:+254112860205" },
-  { icon: Mail, title: "Email Us", value: "info@tripleasecurity.com", href: "mailto:info@tripleasecurity.com" },
+  { icon: Mail, title: "Email Us", value: "info@tripleasecurity.co.ke", href: "mailto:info@tripleasecurity.co.ke" },
   { icon: MapPin, title: "Visit Us", value: "Nairobi, Kenya", href: null },
 ];
 

@@ -6,48 +6,35 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Shield, LogOut, Check, X, Trash2, Users, MessageSquare, Star,
   Plus, Edit, Save, Mail, MailOpen, Briefcase, UserPlus, Printer,
-  Eye, EyeOff, Settings, Image, Video, Link, Camera, Award,
-  Clock, Headphones, Phone, CheckCircle, AlertCircle, PauseCircle,
-  PlayCircle, FileText, User, Package, ShoppingBag, BarChart3,
-  TrendingUp, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
-  Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical, Bell
+  Eye, EyeOff, Settings, Image, Video, Link, ChevronDown, ChevronUp,
+  Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
+  Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
+  Clock, Award, Headphones, Phone, CheckCircle, AlertCircle, PauseCircle,
+  PlayCircle, FileText, User
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
 
+// Icon map for dynamic icon selection
 const iconMap: Record<string, React.ElementType> = {
   Shield, Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
   Clock, Users, Award, Headphones, Star, CheckCircle, Phone, Mail: Mail,
-  Briefcase, Eye, Image, Video, Link, AlertCircle, Settings, Plus, Edit, Save,
-  Package, ShoppingBag
+  Briefcase, Eye, Image, Video, Link, AlertCircle, Settings, Plus, Edit, Save
 };
+
 const iconNames = Object.keys(iconMap);
 
-type TabType = "analytics" | "products" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "team" | "accounts" | "profile";
-
-const PRODUCT_CATEGORIES = [
-  { key: "cctv", label: "CCTV & Surveillance" },
-  { key: "computers", label: "Computers & Laptops" },
-  { key: "networking", label: "Networking" },
-  { key: "accessories", label: "Accessories" },
-  { key: "general", label: "General" },
-];
-
-const STOCK_STATUSES = [
-  { key: "in_stock", label: "In Stock" },
-  { key: "low_stock", label: "Low Stock" },
-  { key: "out_of_stock", label: "Out of Stock" },
-];
+type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<TabType>("analytics");
+  const [tab, setTab] = useState<TabType>("services");
   const [empFilter, setEmpFilter] = useState<"all" | "active" | "released" | "suspended">("all");
 
   // Data states
@@ -60,17 +47,12 @@ const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [empRecords, setEmpRecords] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [inquiries, setInquiries] = useState<any[]>([]);
-  const [userRoles, setUserRoles] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);
-  const [editDialog, setEditDialog] = useState<TabType | "inquiries" | null>(null);
+  const [editDialog, setEditDialog] = useState<TabType | null>(null);
   const [recordDialog, setRecordDialog] = useState<string | null>(null);
   const [newRecord, setNewRecord] = useState({ record_type: "note", title: "", description: "" });
-  const [accountDialog, setAccountDialog] = useState(false);
-  const [newAccount, setNewAccount] = useState({ employee_id: "", email: "", password: "", role: "sales_agent" as string });
 
   // Profile states
   const [newEmail, setNewEmail] = useState("");
@@ -78,6 +60,9 @@ const Admin = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [adminProfile, setAdminProfile] = useState<any>(null);
+
+  // Print ref
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -89,18 +74,21 @@ const Admin = () => {
       setIsAdmin(true);
       setAdminUser(user);
       setNewEmail(user.email || "");
+      // Fetch admin profile
       const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
       if (profile) setAdminProfile(profile);
     };
     checkAdmin();
   }, [navigate]);
 
-  useEffect(() => { if (isAdmin) fetchAll(); }, [isAdmin]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchAll();
+  }, [isAdmin]);
 
   const fetchAll = () => {
-    fetchServices(); fetchWhyUs(); fetchPortfolio(); fetchTestimonials();
-    fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
-    fetchProducts(); fetchInquiries(); fetchUserRoles();
+    fetchServices(); fetchWhyUs(); fetchPortfolio();
+    fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
   };
 
   const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };
@@ -111,9 +99,6 @@ const Admin = () => {
   const fetchEmployees = async () => { const { data } = await supabase.from("employees").select("*").order("created_at", { ascending: false }); if (data) setEmployees(data); };
   const fetchUsers = async () => { const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }); if (data) setUsers(data); };
   const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
-  const fetchProducts = async () => { const { data } = await supabase.from("products").select("*").order("display_order"); if (data) setProducts(data); };
-  const fetchInquiries = async () => { const { data } = await supabase.from("product_inquiries").select("*").order("created_at", { ascending: false }); if (data) setInquiries(data); };
-  const fetchUserRoles = async () => { const { data } = await supabase.from("user_roles").select("*"); if (data) setUserRoles(data); };
 
   const fetchRecords = async (empId: string) => {
     const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });
@@ -122,10 +107,16 @@ const Admin = () => {
 
   // CRUD helpers
   const saveService = async (item: any) => {
-    if (item.id) { await supabase.from("services").update({ icon: item.icon, title: item.title, description: item.description, category: item.category, display_order: item.display_order }).eq("id", item.id); }
-    else { await supabase.from("services").insert({ icon: item.icon, title: item.title, description: item.description, category: item.category, display_order: item.display_order || 0 }); }
+    if (item.id) {
+      const { error } = await supabase.from("services").update({ icon: item.icon, title: item.title, description: item.description, category: item.category, display_order: item.display_order }).eq("id", item.id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    } else {
+      const { error } = await supabase.from("services").insert({ icon: item.icon, title: item.title, description: item.description, category: item.category, display_order: item.display_order || 0 });
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
     toast({ title: "Saved!" }); setEditDialog(null); fetchServices();
   };
+
   const deleteService = async (id: string) => { await supabase.from("services").delete().eq("id", id); fetchServices(); };
 
   const saveWhyUs = async (item: any) => {
@@ -133,6 +124,7 @@ const Admin = () => {
     else { await supabase.from("why_us_cards").insert({ icon: item.icon, title: item.title, description: item.description, display_order: item.display_order || 0 }); }
     toast({ title: "Saved!" }); setEditDialog(null); fetchWhyUs();
   };
+
   const deleteWhyUs = async (id: string) => { await supabase.from("why_us_cards").delete().eq("id", id); fetchWhyUs(); };
 
   const savePortfolio = async (item: any) => {
@@ -140,6 +132,7 @@ const Admin = () => {
     else { await supabase.from("portfolio_works").insert({ title: item.title, description: item.description, image_url: item.image_url, video_url: item.video_url, external_url: item.external_url, display_order: item.display_order || 0 }); }
     toast({ title: "Saved!" }); setEditDialog(null); fetchPortfolio();
   };
+
   const deletePortfolio = async (id: string) => { await supabase.from("portfolio_works").delete().eq("id", id); fetchPortfolio(); };
 
   const toggleApproval = async (id: string, current: boolean) => { await supabase.from("testimonials").update({ approved: !current }).eq("id", id); setTestimonials(prev => prev.map(t => t.id === id ? { ...t, approved: !current } : t)); };
@@ -153,7 +146,8 @@ const Admin = () => {
       await supabase.from("employees").update({
         name: item.name, role: item.role, phone: item.phone, email: item.email,
         photo_url: item.photo_url, is_active: item.is_active,
-        released_at: item.is_active ? null : new Date().toISOString(), suspended_at: null
+        released_at: item.is_active ? null : new Date().toISOString(),
+        suspended_at: null
       }).eq("id", item.id);
     } else {
       await supabase.from("employees").insert({ name: item.name, role: item.role, phone: item.phone, email: item.email, photo_url: item.photo_url });
@@ -161,39 +155,48 @@ const Admin = () => {
     toast({ title: "Saved!" }); setEditDialog(null); fetchEmployees();
   };
 
-  const releaseEmployee = async (id: string) => { await supabase.from("employees").update({ is_active: false, released_at: new Date().toISOString(), suspended_at: null }).eq("id", id); fetchEmployees(); };
-  const suspendEmployee = async (id: string) => { await supabase.from("employees").update({ is_active: false, suspended_at: new Date().toISOString() }).eq("id", id); fetchEmployees(); };
-  const reinstateEmployee = async (id: string) => { await supabase.from("employees").update({ is_active: true, suspended_at: null, released_at: null }).eq("id", id); fetchEmployees(); };
+  const releaseEmployee = async (id: string) => {
+    await supabase.from("employees").update({ is_active: false, released_at: new Date().toISOString(), suspended_at: null }).eq("id", id);
+    fetchEmployees();
+  };
+
+  const suspendEmployee = async (id: string) => {
+    await supabase.from("employees").update({ is_active: false, suspended_at: new Date().toISOString() }).eq("id", id);
+    fetchEmployees();
+  };
+
+  const reinstateEmployee = async (id: string) => {
+    await supabase.from("employees").update({ is_active: true, suspended_at: null, released_at: null }).eq("id", id);
+    fetchEmployees();
+  };
 
   const addRecord = async (empId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("employee_records").insert({ employee_id: empId, record_type: newRecord.record_type, title: newRecord.title, description: newRecord.description, recorded_by: user?.id });
-    toast({ title: "Record added!" }); setNewRecord({ record_type: "note", title: "", description: "" }); fetchRecords(empId);
+    await supabase.from("employee_records").insert({
+      employee_id: empId, record_type: newRecord.record_type,
+      title: newRecord.title, description: newRecord.description,
+      recorded_by: user?.id
+    });
+    toast({ title: "Record added!" });
+    setNewRecord({ record_type: "note", title: "", description: "" });
+    fetchRecords(empId);
   };
-  const deleteRecord = async (recId: string, empId: string) => { await supabase.from("employee_records").delete().eq("id", recId); fetchRecords(empId); };
+
+  const deleteRecord = async (recId: string, empId: string) => {
+    await supabase.from("employee_records").delete().eq("id", recId);
+    fetchRecords(empId);
+  };
 
   const saveTeamMember = async (item: any) => {
-    if (item.id) { await supabase.from("team_members").update({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order, is_visible: item.is_visible, category: item.category || "team" }).eq("id", item.id); }
-    else { await supabase.from("team_members").insert({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order || 0, category: item.category || "team" }); }
+    if (item.id) {
+      await supabase.from("team_members").update({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order, is_visible: item.is_visible }).eq("id", item.id);
+    } else {
+      await supabase.from("team_members").insert({ name: item.name, role: item.role, bio: item.bio, photo_url: item.photo_url, display_order: item.display_order || 0 });
+    }
     toast({ title: "Saved!" }); setEditDialog(null); fetchTeam();
   };
+
   const deleteTeamMember = async (id: string) => { await supabase.from("team_members").delete().eq("id", id); fetchTeam(); };
-
-  const saveProduct = async (item: any) => {
-    if (item.id) {
-      await supabase.from("products").update({ name: item.name, description: item.description, category: item.category, price: item.price, image_url: item.image_url, stock_status: item.stock_status, display_order: item.display_order, is_active: item.is_active }).eq("id", item.id);
-    } else {
-      await supabase.from("products").insert({ name: item.name, description: item.description, category: item.category, price: item.price || 0, image_url: item.image_url, stock_status: item.stock_status || "in_stock", display_order: item.display_order || 0 });
-    }
-    toast({ title: "Saved!" }); setEditDialog(null); fetchProducts();
-  };
-  const deleteProduct = async (id: string) => { await supabase.from("products").delete().eq("id", id); fetchProducts(); };
-
-  const updateInquiryStatus = async (id: string, status: string) => {
-    await supabase.from("product_inquiries").update({ status }).eq("id", id);
-    fetchInquiries();
-  };
-  const deleteInquiry = async (id: string) => { await supabase.from("product_inquiries").delete().eq("id", id); fetchInquiries(); };
 
   const handleImageUpload = async (file: File) => {
     const ext = file.name.split(".").pop();
@@ -217,35 +220,10 @@ const Admin = () => {
   const handleAvatarUpload = async (file: File) => {
     const url = await handleImageUpload(file);
     if (!url || !adminUser) return;
-    await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", adminUser.id);
+    const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", adminUser.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     setAdminProfile((prev: any) => ({ ...prev, avatar_url: url }));
     toast({ title: "Profile picture updated!" });
-  };
-
-  const createStaffAccount = async () => {
-    if (!newAccount.employee_id || !newAccount.password || !newAccount.role) {
-      toast({ title: "Error", description: "All fields are required", variant: "destructive" }); return;
-    }
-    const emp = employees.find(e => e.id === newAccount.employee_id);
-    if (!emp) { toast({ title: "Error", description: "Employee not found", variant: "destructive" }); return; }
-    const email = emp.email;
-    if (!email) { toast({ title: "Error", description: "Employee has no email", variant: "destructive" }); return; }
-
-    try {
-      // Create user via edge function
-      const { data, error } = await supabase.functions.invoke("create-admin", {
-        body: { email, password: newAccount.password, role: newAccount.role, employee_id: newAccount.employee_id }
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Account created!", description: `${email} can now login as ${newAccount.role}` });
-      setAccountDialog(false);
-      setNewAccount({ employee_id: "", email: "", password: "", role: "sales_agent" });
-      fetchUserRoles(); fetchEmployees();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    }
   };
 
   const printEmployeeCard = (emp: any) => {
@@ -271,11 +249,8 @@ const Admin = () => {
   }
 
   const unreadMessages = messages.filter(m => !m.is_read).length;
-  const newInquiriesCount = inquiries.filter(i => i.status === "new").length;
 
   const tabs: { key: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
-    { key: "analytics", label: "Analytics", icon: BarChart3 },
-    { key: "products", label: "Products", icon: Package, badge: newInquiriesCount },
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },
@@ -283,7 +258,7 @@ const Admin = () => {
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
-    { key: "accounts", label: "Accounts", icon: KeyRound },
+    { key: "users", label: "Users", icon: Users },
     { key: "profile", label: "Profile", icon: Settings },
   ];
 
@@ -307,43 +282,23 @@ const Admin = () => {
     : empFilter === "suspended" ? employees.filter(e => !e.is_active && e.suspended_at && !e.released_at)
     : employees.filter(e => !e.is_active && e.released_at);
 
-  // Analytics data
-  const COLORS = ["hsl(var(--primary))", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
-  
-  const msgsByDay = messages.reduce((acc: any, m) => {
-    const day = new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    acc[day] = (acc[day] || 0) + 1;
-    return acc;
-  }, {});
-  const msgChartData = Object.entries(msgsByDay).slice(-14).map(([day, count]) => ({ day, count }));
-
-  const inquiriesByDay = inquiries.reduce((acc: any, i) => {
-    const day = new Date(i.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    acc[day] = (acc[day] || 0) + 1;
-    return acc;
-  }, {});
-  const inquiryChartData = Object.entries(inquiriesByDay).slice(-14).map(([day, count]) => ({ day, count }));
-
-  const productsByCategory = PRODUCT_CATEGORIES.map(c => ({
-    name: c.label,
-    value: products.filter(p => p.category === c.key).length
-  })).filter(p => p.value > 0);
-
-  // Eligible employees for accounts (active, no user_id yet)
-  const eligibleEmployees = employees.filter(e => e.is_active && !e.user_id);
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top header */}
       <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="container px-4 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
+            {/* Admin avatar */}
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/30">
-              {adminProfile?.avatar_url ? <img src={adminProfile.avatar_url} alt="Admin" className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-primary" />}
+              {adminProfile?.avatar_url ? (
+                <img src={adminProfile.avatar_url} alt="Admin" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-primary" />
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              <span className="font-display font-bold">Super Admin</span>
+              <span className="font-display font-bold">Admin</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -361,7 +316,9 @@ const Admin = () => {
               <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" onClick={() => setTab(t.key)} className="shrink-0 relative">
                 <t.icon className="w-4 h-4 mr-1" />
                 {t.label}
-                {t.badge && t.badge > 0 && <span className="ml-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">{t.badge}</span>}
+                {t.badge && t.badge > 0 && (
+                  <span className="ml-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">{t.badge}</span>
+                )}
               </Button>
             ))}
           </div>
@@ -370,140 +327,6 @@ const Admin = () => {
 
       {/* Content area */}
       <div className="container px-4 py-6 flex-1">
-
-        {/* ANALYTICS TAB */}
-        {tab === "analytics" && (
-          <div>
-            <h2 className="font-display font-bold text-lg mb-6">Dashboard Analytics</h2>
-            
-            {/* Summary cards */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-              {[
-                { label: "Active Employees", value: employees.filter(e => e.is_active).length, icon: Users, color: "text-primary" },
-                { label: "Products", value: products.length, icon: Package, color: "text-primary" },
-                { label: "New Inquiries", value: newInquiriesCount, icon: ShoppingBag, color: "text-yellow-500" },
-                { label: "Unread Messages", value: unreadMessages, icon: MessageSquare, color: "text-destructive" },
-                { label: "Pending Reviews", value: testimonials.filter(t => !t.approved).length, icon: Star, color: "text-yellow-500" },
-              ].map((s, i) => (
-                <div key={i} className="p-4 rounded-xl border border-border bg-card">
-                  <div className="flex items-center gap-3">
-                    <s.icon className={`w-8 h-8 ${s.color}`} />
-                    <div>
-                      <p className="text-2xl font-bold">{s.value}</p>
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Charts */}
-            <div className="grid lg:grid-cols-2 gap-6">
-              <div className="p-6 rounded-xl border border-border bg-card">
-                <h3 className="font-display font-semibold mb-4">Contact Messages Trend</h3>
-                {msgChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={msgChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                      <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))" }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : <p className="text-muted-foreground text-sm text-center py-8">No data yet</p>}
-              </div>
-
-              <div className="p-6 rounded-xl border border-border bg-card">
-                <h3 className="font-display font-semibold mb-4">Product Inquiries Trend</h3>
-                {inquiryChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={inquiryChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                      <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : <p className="text-muted-foreground text-sm text-center py-8">No data yet</p>}
-              </div>
-
-              <div className="p-6 rounded-xl border border-border bg-card">
-                <h3 className="font-display font-semibold mb-4">Products by Category</h3>
-                {productsByCategory.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
-                      <Pie data={productsByCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                        {productsByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : <p className="text-muted-foreground text-sm text-center py-8">No products yet</p>}
-              </div>
-
-              <div className="p-6 rounded-xl border border-border bg-card">
-                <h3 className="font-display font-semibold mb-4">Employee Overview</h3>
-                <div className="space-y-3">
-                  {[
-                    { label: "Active", count: employees.filter(e => e.is_active).length, cls: "bg-primary/20 text-primary" },
-                    { label: "Suspended", count: employees.filter(e => !e.is_active && e.suspended_at && !e.released_at).length, cls: "bg-yellow-500/20 text-yellow-600" },
-                    { label: "Released", count: employees.filter(e => !e.is_active && e.released_at).length, cls: "bg-destructive/20 text-destructive" },
-                  ].map(s => (
-                    <div key={s.label} className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">{s.label}</span>
-                      <span className={`text-sm font-bold px-3 py-1 rounded-full ${s.cls}`}>{s.count}</span>
-                    </div>
-                  ))}
-                  <div className="border-t border-border pt-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Total</span>
-                    <span className="text-sm font-bold">{employees.length}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PRODUCTS TAB */}
-        {tab === "products" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-bold text-lg">Products ({products.length})</h2>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => setEditDialog("inquiries")}>
-                  <ShoppingBag className="w-4 h-4 mr-1" /> Inquiries ({inquiries.length})
-                  {newInquiriesCount > 0 && <span className="ml-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">{newInquiriesCount}</span>}
-                </Button>
-                <Button size="sm" onClick={() => { setEditItem({ name: "", description: "", category: "general", price: 0, image_url: "", stock_status: "in_stock", display_order: 0, is_active: true }); setEditDialog("products"); }}>
-                  <Plus className="w-4 h-4 mr-1" /> Add Product
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
-              {products.map(p => (
-                <div key={p.id} className={`p-4 rounded-xl border ${p.is_active ? "border-border bg-card" : "border-border bg-muted/50 opacity-60"} flex items-center justify-between`}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover shrink-0" /> : <Package className="w-8 h-8 text-muted-foreground shrink-0" />}
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{PRODUCT_CATEGORIES.find(c => c.key === p.category)?.label} · KES {Number(p.price).toLocaleString()}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${p.stock_status === "in_stock" ? "bg-primary/20 text-primary" : p.stock_status === "low_stock" ? "bg-yellow-500/20 text-yellow-600" : "bg-destructive/20 text-destructive"}`}>
-                        {STOCK_STATUSES.find(s => s.key === p.stock_status)?.label}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditDialog("products"); }}><Edit className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="w-4 h-4" /></Button>
-                  </div>
-                </div>
-              ))}
-              {products.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No products yet. Add your CCTV, computers, and accessories.</p>}
-            </div>
-          </div>
-        )}
 
         {/* SERVICES TAB */}
         {tab === "services" && (
@@ -586,6 +409,10 @@ const Admin = () => {
                   <div className="p-4">
                     <p className="font-semibold text-sm">{w.title}</p>
                     <p className="text-xs text-muted-foreground mt-1">{w.description.slice(0, 80)}</p>
+                    <div className="flex gap-2 mt-2">
+                      {w.video_url && <span className="text-xs text-primary flex items-center gap-1"><Video className="w-3 h-3" /> Video</span>}
+                      {w.external_url && <span className="text-xs text-primary flex items-center gap-1"><Link className="w-3 h-3" /> URL</span>}
+                    </div>
                     <div className="flex gap-1 mt-3">
                       <Button size="sm" variant="ghost" onClick={() => { setEditItem(w); setEditDialog("portfolio"); }}><Edit className="w-4 h-4" /></Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deletePortfolio(w.id)}><Trash2 className="w-4 h-4" /></Button>
@@ -609,7 +436,9 @@ const Admin = () => {
                       <div className="flex items-center gap-2 mb-1">
                         <p className="font-semibold text-sm">{t.name}</p>
                         {t.role && <span className="text-xs text-muted-foreground">• {t.role}</span>}
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${t.approved ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{t.approved ? "Approved" : "Pending"}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${t.approved ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {t.approved ? "Approved" : "Pending"}
+                        </span>
                       </div>
                       <div className="flex gap-0.5 mb-2">
                         {Array.from({ length: t.rating || 0 }).map((_, i) => <Star key={i} className="w-3 h-3 fill-primary text-primary" />)}
@@ -617,7 +446,9 @@ const Admin = () => {
                       <p className="text-sm text-muted-foreground">{t.content}</p>
                     </div>
                     <div className="flex gap-1 ml-4 shrink-0">
-                      <Button size="sm" variant="ghost" onClick={() => toggleApproval(t.id, t.approved)}>{t.approved ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => toggleApproval(t.id, t.approved)}>
+                        {t.approved ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteTestimonial(t.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
@@ -630,7 +461,9 @@ const Admin = () => {
         {/* MESSAGES TAB */}
         {tab === "messages" && (
           <div>
-            <h2 className="font-display font-bold text-lg mb-4">Messages ({messages.length}) {unreadMessages > 0 && <span className="text-destructive">· {unreadMessages} unread</span>}</h2>
+            <h2 className="font-display font-bold text-lg mb-4">
+              Messages ({messages.length}) {unreadMessages > 0 && <span className="text-destructive">· {unreadMessages} unread</span>}
+            </h2>
             <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {messages.map(m => (
                 <div key={m.id} className={`p-4 rounded-xl border ${m.is_read ? "border-border bg-card" : "border-primary/30 bg-primary/5"}`}>
@@ -646,7 +479,9 @@ const Admin = () => {
                       <p className="text-xs text-muted-foreground mt-2">{new Date(m.created_at).toLocaleString()}</p>
                     </div>
                     <div className="flex gap-1 ml-4 shrink-0">
-                      <Button size="sm" variant="ghost" onClick={() => toggleRead(m.id, m.is_read)}>{m.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => toggleRead(m.id, m.is_read)}>
+                        {m.is_read ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMessage(m.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
@@ -673,26 +508,43 @@ const Admin = () => {
                 { key: "suspended", label: "Suspended", count: employees.filter(e => !e.is_active && e.suspended_at && !e.released_at).length },
                 { key: "released", label: "Released", count: employees.filter(e => !e.is_active && e.released_at).length },
               ] as const).map(f => (
-                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key)} className="rounded-xl">{f.label} ({f.count})</Button>
+                <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key)} className="rounded-xl">
+                  {f.label} ({f.count})
+                </Button>
               ))}
             </div>
             <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
               {filteredEmployees.map(emp => {
                 const status = getEmpStatus(emp);
                 return (
-                  <div key={emp.id} className={`p-4 rounded-xl border ${status === "active" ? "border-border bg-card" : status === "suspended" ? "border-yellow-500/30 bg-yellow-500/5" : "border-destructive/30 bg-destructive/5"}`}>
+                  <div key={emp.id} className={`p-4 rounded-xl border ${
+                    status === "active" ? "border-border bg-card" :
+                    status === "suspended" ? "border-yellow-500/30 bg-yellow-500/5" :
+                    "border-destructive/30 bg-destructive/5"
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 min-w-0">
-                        {emp.photo_url ? <img src={emp.photo_url} alt={emp.name} className="w-10 h-10 rounded-full object-cover shrink-0" /> : <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><Users className="w-5 h-5 text-primary" /></div>}
+                        {emp.photo_url ? (
+                          <img src={emp.photo_url} alt={emp.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><Users className="w-5 h-5 text-primary" /></div>
+                        )}
                         <div className="min-w-0">
                           <p className="font-semibold text-sm truncate">{emp.name}</p>
                           <p className="text-xs text-muted-foreground">{emp.role}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${status === "active" ? "bg-primary/20 text-primary" : status === "suspended" ? "bg-yellow-500/20 text-yellow-600" : "bg-destructive/20 text-destructive"}`}>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            status === "active" ? "bg-primary/20 text-primary" :
+                            status === "suspended" ? "bg-yellow-500/20 text-yellow-600" :
+                            "bg-destructive/20 text-destructive"
+                          }`}>
                             {status === "active" ? "Active" : status === "suspended" ? "Suspended" : "Released"}
                           </span>
-                          {status === "released" && emp.released_at && <p className="text-xs text-destructive mt-1">Released: {new Date(emp.released_at).toLocaleString()}</p>}
-                          {status === "suspended" && emp.suspended_at && <p className="text-xs text-yellow-600 mt-1">Suspended: {new Date(emp.suspended_at).toLocaleString()}</p>}
-                          {emp.user_id && <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary ml-1">Has Account</span>}
+                          {status === "released" && emp.released_at && (
+                            <p className="text-xs text-destructive mt-1">Released: {new Date(emp.released_at).toLocaleString()}</p>
+                          )}
+                          {status === "suspended" && emp.suspended_at && (
+                            <p className="text-xs text-yellow-600 mt-1">Suspended: {new Date(emp.suspended_at).toLocaleString()}</p>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0 flex-wrap justify-end">
@@ -701,11 +553,19 @@ const Admin = () => {
                         <Button size="sm" variant="ghost" onClick={() => { setRecordDialog(emp.id); fetchRecords(emp.id); }} title="Records"><FileText className="w-4 h-4" /></Button>
                         {emp.is_active && (
                           <>
-                            <Button size="sm" variant="ghost" className="text-yellow-600" onClick={() => suspendEmployee(emp.id)} title="Suspend"><PauseCircle className="w-4 h-4" /></Button>
-                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => releaseEmployee(emp.id)} title="Release"><X className="w-4 h-4" /></Button>
+                            <Button size="sm" variant="ghost" className="text-yellow-600" onClick={() => suspendEmployee(emp.id)} title="Suspend">
+                              <PauseCircle className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => releaseEmployee(emp.id)} title="Release">
+                              <X className="w-4 h-4" />
+                            </Button>
                           </>
                         )}
-                        {!emp.is_active && <Button size="sm" variant="ghost" className="text-primary" onClick={() => reinstateEmployee(emp.id)} title="Reinstate"><PlayCircle className="w-4 h-4" /></Button>}
+                        {!emp.is_active && (
+                          <Button size="sm" variant="ghost" className="text-primary" onClick={() => reinstateEmployee(emp.id)} title="Reinstate">
+                            <PlayCircle className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
@@ -723,26 +583,26 @@ const Admin = () => {
         {tab === "team" && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-bold text-lg">Team & Leadership ({teamMembers.length})</h2>
-              <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", bio: "", photo_url: "", display_order: 0, is_visible: true, category: "team" }); setEditDialog("team"); }}>
+              <h2 className="font-display font-bold text-lg">Team Members ({teamMembers.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", bio: "", photo_url: "", display_order: 0, is_visible: true }); setEditDialog("team"); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Member
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">Leadership members appear in a separate section on the About page.</p>
+            <p className="text-xs text-muted-foreground mb-4">These members appear on the About Us page.</p>
             <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
               {teamMembers.map(m => (
                 <div key={m.id} className={`p-4 rounded-xl border ${m.is_visible ? "border-border bg-card" : "border-border bg-muted/50 opacity-60"} flex items-center justify-between`}>
                   <div className="flex items-center gap-3 min-w-0">
-                    {m.photo_url ? <img src={m.photo_url} alt={m.name} className="w-12 h-12 rounded-full object-cover shrink-0" /> : <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="w-6 h-6 text-primary" /></div>}
+                    {m.photo_url ? (
+                      <img src={m.photo_url} alt={m.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="w-6 h-6 text-primary" /></div>
+                    )}
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{m.name}</p>
                       <p className="text-xs text-muted-foreground">{m.role}</p>
-                      <div className="flex gap-1 mt-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${m.category === "leadership" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
-                          {m.category === "leadership" ? "Leadership" : "Team"}
-                        </span>
-                        {!m.is_visible && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
-                      </div>
+                      {m.bio && <p className="text-xs text-muted-foreground truncate max-w-xs">{m.bio.slice(0, 80)}...</p>}
+                      {!m.is_visible && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
@@ -751,54 +611,23 @@ const Admin = () => {
                   </div>
                 </div>
               ))}
-              {teamMembers.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No team members yet.</p>}
+              {teamMembers.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No team members yet. Add members to show on the About Us page.</p>}
             </div>
           </div>
         )}
 
-        {/* ACCOUNTS TAB */}
-        {tab === "accounts" && (
+        {tab === "users" && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-display font-bold text-lg">Staff Accounts</h2>
-                <p className="text-xs text-muted-foreground">Create login accounts for registered employees. Each role has different access levels.</p>
-              </div>
-              <Button size="sm" onClick={() => setAccountDialog(true)}>
-                <UserPlus className="w-4 h-4 mr-1" /> Create Account
-              </Button>
-            </div>
-
-            <div className="grid sm:grid-cols-3 gap-4 mb-6">
-              {[
-                { role: "Manager", desc: "View employees, messages, products, analytics", color: "border-primary/30 bg-primary/5" },
-                { role: "Sales Agent", desc: "Manage products and inquiries only", color: "border-yellow-500/30 bg-yellow-500/5" },
-                { role: "Technician", desc: "View employees and their records", color: "border-green-500/30 bg-green-500/5" },
-              ].map(r => (
-                <div key={r.role} className={`p-4 rounded-xl border ${r.color}`}>
-                  <p className="font-semibold text-sm">{r.role}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{r.desc}</p>
-                  <p className="text-xs font-bold mt-2">{userRoles.filter(ur => ur.role === r.role.toLowerCase().replace(" ", "_")).length} accounts</p>
+            <h2 className="font-display font-bold text-lg mb-4">Users ({users.length})</h2>
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {users.map(u => (
+                <div key={u.id} className="p-4 rounded-xl border border-border bg-card flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-sm">{u.display_name || "Unnamed"}</p>
+                    <p className="text-xs text-muted-foreground">Joined {new Date(u.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
               ))}
-            </div>
-
-            <h3 className="font-semibold text-sm mb-3">All Staff Accounts</h3>
-            <div className="space-y-3 max-h-[calc(100vh-350px)] overflow-y-auto pr-1">
-              {userRoles.filter(ur => ur.role !== "admin").map(ur => {
-                const emp = employees.find(e => e.user_id === ur.user_id);
-                const profile = users.find(u => u.user_id === ur.user_id);
-                return (
-                  <div key={ur.id} className="p-4 rounded-xl border border-border bg-card flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{emp?.name || profile?.display_name || "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground">{emp?.email}</p>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">{ur.role}</span>
-                    </div>
-                  </div>
-                );
-              })}
-              {userRoles.filter(ur => ur.role !== "admin").length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No staff accounts yet. Create one from the button above.</p>}
             </div>
           </div>
         )}
@@ -811,19 +640,34 @@ const Admin = () => {
               <div className="flex flex-col items-center gap-3">
                 <div className="relative group">
                   <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/30 overflow-hidden">
-                    {adminProfile?.avatar_url ? <img src={adminProfile.avatar_url} alt="Admin" className="w-full h-full object-cover" /> : <User className="w-10 h-10 text-primary" />}
+                    {adminProfile?.avatar_url ? (
+                      <img src={adminProfile.avatar_url} alt="Admin" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-10 h-10 text-primary" />
+                    )}
                   </div>
                   <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                     <Camera className="w-6 h-6 text-white" />
-                    <input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files?.[0]; if (file) handleAvatarUpload(file); }} />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                    }} />
                   </label>
                 </div>
                 <p className="text-xs text-muted-foreground">Hover & click to change photo</p>
               </div>
               <p className="text-center text-sm text-muted-foreground">{adminUser?.email}</p>
-              <div className="space-y-2"><Label>Email</Label><Input value={newEmail} onChange={e => setNewEmail(e.target.value)} className="rounded-xl" /></div>
-              <div className="space-y-2"><Label>New Password (leave blank to keep current)</Label><Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" /></div>
-              <Button onClick={updateProfile} disabled={profileLoading} className="w-full"><Save className="w-4 h-4 mr-1" /> {profileLoading ? "Saving..." : "Update Profile"}</Button>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input value={newEmail} onChange={e => setNewEmail(e.target.value)} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label>New Password (leave blank to keep current)</Label>
+                <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" className="rounded-xl" />
+              </div>
+              <Button onClick={updateProfile} disabled={profileLoading} className="w-full">
+                <Save className="w-4 h-4 mr-1" /> {profileLoading ? "Saving..." : "Update Profile"}
+              </Button>
             </div>
           </div>
         )}
@@ -875,7 +719,10 @@ const Admin = () => {
               <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" /></div>
               <div className="space-y-2">
                 <Label>Image</Label>
-                <Input type="file" accept="image/*" onChange={async e => { const file = e.target.files?.[0]; if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); } }} className="rounded-xl" />
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
+                }} className="rounded-xl" />
                 {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
               </div>
               <div className="space-y-2"><Label>Video URL</Label><Input value={editItem.video_url || ""} onChange={e => setEditItem({ ...editItem, video_url: e.target.value })} placeholder="https://youtube.com/..." className="rounded-xl" /></div>
@@ -929,7 +776,10 @@ const Admin = () => {
               </div>
               <div className="space-y-2">
                 <Label>Photo</Label>
-                <Input type="file" accept="image/*" onChange={async e => { const file = e.target.files?.[0]; if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); } }} className="rounded-xl" />
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); }
+                }} className="rounded-xl" />
                 {editItem.photo_url && <img src={editItem.photo_url} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2" />}
               </div>
               {editItem.id && (
@@ -944,108 +794,58 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Products Edit Dialog */}
-      <Dialog open={editDialog === "products"} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Product</DialogTitle></DialogHeader>
-          {editItem && (
-            <div className="space-y-4">
-              <div className="space-y-2"><Label>Product Name</Label><Input value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} placeholder="e.g. Hikvision 4CH CCTV Kit" className="rounded-xl" /></div>
-              <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} placeholder="Product details..." className="rounded-xl" /></div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <select value={editItem.category} onChange={e => setEditItem({ ...editItem, category: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                  {PRODUCT_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" value={editItem.price} onChange={e => setEditItem({ ...editItem, price: parseFloat(e.target.value) || 0 })} className="rounded-xl" /></div>
-              <div className="space-y-2">
-                <Label>Stock Status</Label>
-                <select value={editItem.stock_status} onChange={e => setEditItem({ ...editItem, stock_status: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                  {STOCK_STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Image</Label>
-                <Input type="file" accept="image/*" onChange={async e => { const file = e.target.files?.[0]; if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); } }} className="rounded-xl" />
-                {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
-              </div>
-              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
-              {editItem.id && (
-                <div className="flex items-center gap-2">
-                  <Label>Active (visible on website)</Label>
-                  <input type="checkbox" checked={editItem.is_active} onChange={e => setEditItem({ ...editItem, is_active: e.target.checked })} />
-                </div>
-              )}
-              <Button onClick={() => saveProduct(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Inquiries Dialog */}
-      <Dialog open={editDialog === "inquiries"} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto max-w-2xl">
-          <DialogHeader><DialogTitle>Product Inquiries ({inquiries.length})</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            {inquiries.map(inq => {
-              const product = products.find(p => p.id === inq.product_id);
-              return (
-                <div key={inq.id} className={`p-4 rounded-xl border ${inq.status === "new" ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{inq.customer_name}</p>
-                      <p className="text-xs text-muted-foreground">{inq.customer_email} · {inq.customer_phone}</p>
-                      {product && <p className="text-xs text-primary mt-1">Product: {product.name}</p>}
-                      <p className="text-sm text-muted-foreground mt-1">{inq.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{new Date(inq.created_at).toLocaleString()}</p>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <select value={inq.status} onChange={e => updateInquiryStatus(inq.id, e.target.value)} className="h-8 rounded-lg border border-border bg-card px-2 text-xs">
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="closed">Closed</option>
-                      </select>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteInquiry(inq.id)}><Trash2 className="w-3 h-3" /></Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {inquiries.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No inquiries yet.</p>}
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Employee Records Dialog */}
       <Dialog open={!!recordDialog} onOpenChange={() => setRecordDialog(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto max-w-lg">
-          <DialogHeader><DialogTitle>Employee Records</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Employee Records</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
+            {/* Add new record form */}
             <div className="p-4 rounded-xl border border-border bg-card space-y-3">
               <p className="font-semibold text-sm">Add New Record</p>
               <div className="space-y-2">
                 <Label>Type</Label>
                 <select value={newRecord.record_type} onChange={e => setNewRecord({ ...newRecord, record_type: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                  <option value="note">Note</option><option value="warning">Warning</option><option value="incident">Incident</option><option value="commendation">Commendation</option><option value="disciplinary">Disciplinary</option>
+                  <option value="note">Note</option>
+                  <option value="warning">Warning</option>
+                  <option value="incident">Incident</option>
+                  <option value="commendation">Commendation</option>
+                  <option value="disciplinary">Disciplinary</option>
                 </select>
               </div>
               <div className="space-y-2"><Label>Title</Label><Input value={newRecord.title} onChange={e => setNewRecord({ ...newRecord, title: e.target.value })} placeholder="Brief title..." className="rounded-xl" /></div>
               <div className="space-y-2"><Label>Description</Label><Textarea value={newRecord.description} onChange={e => setNewRecord({ ...newRecord, description: e.target.value })} placeholder="Details..." className="rounded-xl" /></div>
-              <Button size="sm" onClick={() => recordDialog && addRecord(recordDialog)} disabled={!newRecord.title.trim()}><Plus className="w-4 h-4 mr-1" /> Add Record</Button>
+              <Button size="sm" onClick={() => recordDialog && addRecord(recordDialog)} disabled={!newRecord.title.trim()}>
+                <Plus className="w-4 h-4 mr-1" /> Add Record
+              </Button>
             </div>
+
+            {/* Existing records */}
             <div className="space-y-2">
               {empRecords.length === 0 && <p className="text-muted-foreground text-sm text-center py-4">No records yet.</p>}
               {empRecords.map(r => (
-                <div key={r.id} className={`p-3 rounded-lg border text-sm ${r.record_type === "warning" ? "border-yellow-500/30 bg-yellow-500/5" : r.record_type === "incident" || r.record_type === "disciplinary" ? "border-destructive/30 bg-destructive/5" : r.record_type === "commendation" ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
+                <div key={r.id} className={`p-3 rounded-lg border text-sm ${
+                  r.record_type === "warning" ? "border-yellow-500/30 bg-yellow-500/5" :
+                  r.record_type === "incident" || r.record_type === "disciplinary" ? "border-destructive/30 bg-destructive/5" :
+                  r.record_type === "commendation" ? "border-primary/30 bg-primary/5" :
+                  "border-border bg-card"
+                }`}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${r.record_type === "warning" ? "bg-yellow-500/20 text-yellow-600" : r.record_type === "incident" || r.record_type === "disciplinary" ? "bg-destructive/20 text-destructive" : r.record_type === "commendation" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{r.record_type}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        r.record_type === "warning" ? "bg-yellow-500/20 text-yellow-600" :
+                        r.record_type === "incident" || r.record_type === "disciplinary" ? "bg-destructive/20 text-destructive" :
+                        r.record_type === "commendation" ? "bg-primary/20 text-primary" :
+                        "bg-muted text-muted-foreground"
+                      }`}>{r.record_type}</span>
                       <p className="font-semibold mt-1">{r.title}</p>
                       {r.description && <p className="text-muted-foreground mt-1">{r.description}</p>}
                       <p className="text-xs text-muted-foreground mt-2">{new Date(r.created_at).toLocaleString()}</p>
                     </div>
-                    <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => recordDialog && deleteRecord(r.id, recordDialog)}><Trash2 className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => recordDialog && deleteRecord(r.id, recordDialog)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -1064,15 +864,11 @@ const Admin = () => {
               <div className="space-y-2"><Label>Role / Title</Label><Input value={editItem.role} onChange={e => setEditItem({ ...editItem, role: e.target.value })} placeholder="e.g. Co-Founder, Operations Lead" className="rounded-xl" /></div>
               <div className="space-y-2"><Label>Bio / Message</Label><Textarea value={editItem.bio || ""} onChange={e => setEditItem({ ...editItem, bio: e.target.value })} placeholder="Short bio or personal message..." className="rounded-xl" /></div>
               <div className="space-y-2">
-                <Label>Category</Label>
-                <select value={editItem.category || "team"} onChange={e => setEditItem({ ...editItem, category: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                  <option value="leadership">Leadership</option>
-                  <option value="team">Team Member</option>
-                </select>
-              </div>
-              <div className="space-y-2">
                 <Label>Photo</Label>
-                <Input type="file" accept="image/*" onChange={async e => { const file = e.target.files?.[0]; if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); } }} className="rounded-xl" />
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, photo_url: url }); }
+                }} className="rounded-xl" />
                 {editItem.photo_url && <img src={editItem.photo_url} alt="Preview" className="w-16 h-16 rounded-full object-cover mt-2" />}
               </div>
               <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
@@ -1085,41 +881,6 @@ const Admin = () => {
               <Button onClick={() => saveTeamMember(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Staff Account Dialog */}
-      <Dialog open={accountDialog} onOpenChange={setAccountDialog}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Create Staff Account</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <p className="text-xs text-muted-foreground">Select an active employee to create a login account. The employee must be registered first.</p>
-            <div className="space-y-2">
-              <Label>Select Employee</Label>
-              <select value={newAccount.employee_id} onChange={e => setNewAccount({ ...newAccount, employee_id: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                <option value="">Choose an employee...</option>
-                {eligibleEmployees.map(e => (
-                  <option key={e.id} value={e.id}>{e.name} — {e.role} ({e.email})</option>
-                ))}
-              </select>
-              {eligibleEmployees.length === 0 && <p className="text-xs text-destructive">No eligible employees. Add employees first or all active employees already have accounts.</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <select value={newAccount.role} onChange={e => setNewAccount({ ...newAccount, role: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
-                <option value="manager">Manager — Full view access</option>
-                <option value="sales_agent">Sales Agent — Products & inquiries</option>
-                <option value="technician">Technician — Employees & records</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input type="password" value={newAccount.password} onChange={e => setNewAccount({ ...newAccount, password: e.target.value })} placeholder="Set a password (min 6 chars)" minLength={6} className="rounded-xl" />
-            </div>
-            <Button onClick={createStaffAccount} className="w-full" disabled={!newAccount.employee_id || !newAccount.password}>
-              <UserPlus className="w-4 h-4 mr-1" /> Create Account
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

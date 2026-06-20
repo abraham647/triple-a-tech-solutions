@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { label: "Services", scrollId: "services" },
-  { label: "Products", path: "/products" },
   { label: "Our Work", scrollId: "our-work" },
   { label: "About Us", path: "/about" },
   { label: "Contact", scrollId: "contact" },

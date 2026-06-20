@@ -12,8 +12,6 @@ import EmployeeVerify from "./pages/EmployeeVerify";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Careers from "./pages/Careers";
-import Products from "./pages/Products";
-import StaffDashboard from "./pages/StaffDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,8 +32,6 @@ const App = () => (
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/careers" element={<Careers />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/staff" element={<StaffDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

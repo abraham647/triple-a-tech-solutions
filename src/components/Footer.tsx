@@ -130,7 +130,6 @@ const Footer = () => {
               <div className="space-y-2">
                 {[
                   { label: "Services", action: () => scrollTo("services") },
-                  { label: "Products", action: () => goTo("/products") },
                   { label: "Our Work", action: () => scrollTo("our-work") },
                   { label: "About Us", action: () => goTo("/about") },
                   { label: "Contact", action: () => scrollTo("contact") },

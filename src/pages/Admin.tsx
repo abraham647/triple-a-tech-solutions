@@ -14,7 +14,7 @@ import {
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
   Clock, Award, Headphones, Phone, CheckCircle, AlertCircle, PauseCircle,
-  PlayCircle, FileText, User
+  PlayCircle, FileText, User, Package, ShoppingCart
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 

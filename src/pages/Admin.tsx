@@ -14,7 +14,7 @@ import {
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
   Clock, Award, Headphones, Phone, CheckCircle, AlertCircle, PauseCircle,
-  PlayCircle, FileText, User
+  PlayCircle, FileText, User, Package, ShoppingCart
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -28,7 +28,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team";
+type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -47,6 +47,8 @@ const Admin = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [empRecords, setEmpRecords] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [inquiries, setInquiries] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);
@@ -89,6 +91,7 @@ const Admin = () => {
   const fetchAll = () => {
     fetchServices(); fetchWhyUs(); fetchPortfolio();
     fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
+    fetchProducts(); fetchInquiries();
   };
 
   const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };
@@ -99,6 +102,8 @@ const Admin = () => {
   const fetchEmployees = async () => { const { data } = await supabase.from("employees").select("*").order("created_at", { ascending: false }); if (data) setEmployees(data); };
   const fetchUsers = async () => { const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false }); if (data) setUsers(data); };
   const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
+  const fetchProducts = async () => { const { data } = await supabase.from("products").select("*").order("display_order"); if (data) setProducts(data); };
+  const fetchInquiries = async () => { const { data } = await supabase.from("product_inquiries").select("*").order("created_at", { ascending: false }); if (data) setInquiries(data); };
 
   const fetchRecords = async (empId: string) => {
     const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });
@@ -198,6 +203,37 @@ const Admin = () => {
 
   const deleteTeamMember = async (id: string) => { await supabase.from("team_members").delete().eq("id", id); fetchTeam(); };
 
+  const saveProduct = async (item: any) => {
+    const payload = {
+      name: item.name, description: item.description, category: item.category,
+      price: Number(item.price) || 0, image_url: item.image_url,
+      stock_status: item.stock_status, display_order: item.display_order || 0,
+      is_active: item.is_active ?? true,
+    };
+    if (item.id) {
+      const { error } = await supabase.from("products").update(payload).eq("id", item.id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    } else {
+      const { error } = await supabase.from("products").insert(payload);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
+    toast({ title: "Saved!" }); setEditDialog(null); fetchProducts();
+  };
+
+  const deleteProduct = async (id: string) => { await supabase.from("products").delete().eq("id", id); fetchProducts(); };
+  const toggleProductActive = async (id: string, current: boolean) => {
+    await supabase.from("products").update({ is_active: !current }).eq("id", id);
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: !current } : p));
+  };
+
+  const updateInquiryStatus = async (id: string, status: string) => {
+    await supabase.from("product_inquiries").update({ status }).eq("id", id);
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+  };
+  const deleteInquiry = async (id: string) => { await supabase.from("product_inquiries").delete().eq("id", id); setInquiries(prev => prev.filter(i => i.id !== id)); };
+
+
+
   const handleImageUpload = async (file: File) => {
     const ext = file.name.split(".").pop();
     const path = `${Date.now()}.${ext}`;
@@ -249,12 +285,18 @@ const Admin = () => {
   }
 
   const unreadMessages = messages.filter(m => !m.is_read).length;
+  const newInquiries = inquiries.filter(i => i.status === "new").length;
 
   const tabs: { key: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },
+    { key: "products", label: "Products", icon: Package },
+    { key: "inquiries", label: "Inquiries", icon: ShoppingCart, badge: newInquiries },
     { key: "team", label: "Team", icon: Users },
+    { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
+    { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
+    { key: "employees", label: "Employees", icon: Briefcase },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
@@ -424,7 +466,89 @@ const Admin = () => {
           </div>
         )}
 
-        {/* TESTIMONIALS TAB */}
+        {/* PRODUCTS TAB */}
+        {tab === "products" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-lg">Products ({products.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ name: "", description: "", category: "CCTV", price: 0, image_url: "", stock_status: "in_stock", display_order: 0, is_active: true }); setEditDialog("products"); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Product
+              </Button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {products.map(p => (
+                <div key={p.id} className={`rounded-xl border bg-card overflow-hidden ${p.is_active ? "border-border" : "border-border opacity-60"}`}>
+                  <div className="h-32 bg-secondary/40 flex items-center justify-center overflow-hidden">
+                    {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-8 h-8 text-muted-foreground" />}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-sm truncate flex-1">{p.name}</p>
+                      {!p.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{p.category} · {p.stock_status} · Order: {p.display_order}</p>
+                    <p className="text-sm font-semibold text-primary mt-1">KES {Number(p.price).toLocaleString()}</p>
+                    <div className="flex gap-1 mt-3">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditDialog("products"); }}><Edit className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => toggleProductActive(p.id, p.is_active)} title={p.is_active ? "Hide" : "Show"}>
+                        {p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 && <p className="text-muted-foreground text-sm">No products yet.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* INQUIRIES TAB */}
+        {tab === "inquiries" && (
+          <div>
+            <h2 className="font-display font-bold text-lg mb-4">
+              Product Inquiries ({inquiries.length}) {newInquiries > 0 && <span className="text-destructive">· {newInquiries} new</span>}
+            </h2>
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {inquiries.map(inq => {
+                const prod = products.find(p => p.id === inq.product_id);
+                return (
+                  <div key={inq.id} className={`p-4 rounded-xl border ${inq.status === "new" ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-semibold text-sm">{inq.customer_name}</p>
+                          <span className="text-xs text-muted-foreground">{inq.customer_email}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            inq.status === "new" ? "bg-primary/20 text-primary" :
+                            inq.status === "contacted" ? "bg-yellow-500/20 text-yellow-600" :
+                            inq.status === "closed" ? "bg-muted text-muted-foreground" : "bg-accent/20 text-accent"
+                          }`}>{inq.status}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-1">📞 {inq.customer_phone}</p>
+                        {prod && <p className="text-xs text-primary mb-1">Product: {prod.name}</p>}
+                        <p className="text-sm text-muted-foreground">{inq.message}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{new Date(inq.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0 items-end">
+                        <select value={inq.status} onChange={e => updateInquiryStatus(inq.id, e.target.value)} className="h-8 rounded-lg border border-border bg-card px-2 text-xs">
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="quoted">Quoted</option>
+                          <option value="closed">Closed</option>
+                        </select>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteInquiry(inq.id)}><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {inquiries.length === 0 && <p className="text-muted-foreground text-sm">No inquiries yet.</p>}
+            </div>
+          </div>
+        )}
+
+
         {tab === "testimonials" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Testimonials ({testimonials.length})</h2>
@@ -733,6 +857,63 @@ const Admin = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Product Edit Dialog */}
+      <Dialog open={editDialog === "products"} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Product</DialogTitle></DialogHeader>
+          {editItem && (
+            <div className="space-y-4">
+              <div className="space-y-2"><Label>Name</Label><Input value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <select value={editItem.category} onChange={e => setEditItem({ ...editItem, category: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                    <option value="CCTV">CCTV</option>
+                    <option value="Computers">Computers</option>
+                    <option value="Networking">Networking</option>
+                    <option value="Access Control">Access Control</option>
+                    <option value="Alarms">Alarms</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="general">General</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Stock Status</Label>
+                  <select value={editItem.stock_status} onChange={e => setEditItem({ ...editItem, stock_status: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                    <option value="in_stock">In Stock</option>
+                    <option value="low_stock">Low Stock</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                    <option value="preorder">Pre-order</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" value={editItem.price} onChange={e => setEditItem({ ...editItem, price: e.target.value })} className="rounded-xl" /></div>
+                <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
+              </div>
+              <div className="space-y-2">
+                <Label>Image</Label>
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
+                }} className="rounded-xl" />
+                {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
+              </div>
+              {editItem.id && (
+                <div className="flex items-center gap-2">
+                  <Label>Active (visible on site)</Label>
+                  <input type="checkbox" checked={editItem.is_active} onChange={e => setEditItem({ ...editItem, is_active: e.target.checked })} />
+                </div>
+              )}
+              <Button onClick={() => saveProduct(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+
 
       <Dialog open={editDialog === "employees"} onOpenChange={() => setEditDialog(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">

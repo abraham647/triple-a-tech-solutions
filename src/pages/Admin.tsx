@@ -858,6 +858,63 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Product Edit Dialog */}
+      <Dialog open={editDialog === "products"} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Product</DialogTitle></DialogHeader>
+          {editItem && (
+            <div className="space-y-4">
+              <div className="space-y-2"><Label>Name</Label><Input value={editItem.name} onChange={e => setEditItem({ ...editItem, name: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea value={editItem.description} onChange={e => setEditItem({ ...editItem, description: e.target.value })} className="rounded-xl" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <select value={editItem.category} onChange={e => setEditItem({ ...editItem, category: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                    <option value="CCTV">CCTV</option>
+                    <option value="Computers">Computers</option>
+                    <option value="Networking">Networking</option>
+                    <option value="Access Control">Access Control</option>
+                    <option value="Alarms">Alarms</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="general">General</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Stock Status</Label>
+                  <select value={editItem.stock_status} onChange={e => setEditItem({ ...editItem, stock_status: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                    <option value="in_stock">In Stock</option>
+                    <option value="low_stock">Low Stock</option>
+                    <option value="out_of_stock">Out of Stock</option>
+                    <option value="preorder">Pre-order</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" value={editItem.price} onChange={e => setEditItem({ ...editItem, price: e.target.value })} className="rounded-xl" /></div>
+                <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
+              </div>
+              <div className="space-y-2">
+                <Label>Image</Label>
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
+                }} className="rounded-xl" />
+                {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
+              </div>
+              {editItem.id && (
+                <div className="flex items-center gap-2">
+                  <Label>Active (visible on site)</Label>
+                  <input type="checkbox" checked={editItem.is_active} onChange={e => setEditItem({ ...editItem, is_active: e.target.checked })} />
+                </div>
+              )}
+              <Button onClick={() => saveProduct(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+
+
       <Dialog open={editDialog === "employees"} onOpenChange={() => setEditDialog(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} Employee</DialogTitle></DialogHeader>

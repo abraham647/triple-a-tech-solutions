@@ -203,6 +203,37 @@ const Admin = () => {
 
   const deleteTeamMember = async (id: string) => { await supabase.from("team_members").delete().eq("id", id); fetchTeam(); };
 
+  const saveProduct = async (item: any) => {
+    const payload = {
+      name: item.name, description: item.description, category: item.category,
+      price: Number(item.price) || 0, image_url: item.image_url,
+      stock_status: item.stock_status, display_order: item.display_order || 0,
+      is_active: item.is_active ?? true,
+    };
+    if (item.id) {
+      const { error } = await supabase.from("products").update(payload).eq("id", item.id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    } else {
+      const { error } = await supabase.from("products").insert(payload);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
+    toast({ title: "Saved!" }); setEditDialog(null); fetchProducts();
+  };
+
+  const deleteProduct = async (id: string) => { await supabase.from("products").delete().eq("id", id); fetchProducts(); };
+  const toggleProductActive = async (id: string, current: boolean) => {
+    await supabase.from("products").update({ is_active: !current }).eq("id", id);
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: !current } : p));
+  };
+
+  const updateInquiryStatus = async (id: string, status: string) => {
+    await supabase.from("product_inquiries").update({ status }).eq("id", id);
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+  };
+  const deleteInquiry = async (id: string) => { await supabase.from("product_inquiries").delete().eq("id", id); setInquiries(prev => prev.filter(i => i.id !== id)); };
+
+
+
   const handleImageUpload = async (file: File) => {
     const ext = file.name.split(".").pop();
     const path = `${Date.now()}.${ext}`;

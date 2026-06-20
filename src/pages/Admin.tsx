@@ -285,12 +285,18 @@ const Admin = () => {
   }
 
   const unreadMessages = messages.filter(m => !m.is_read).length;
+  const newInquiries = inquiries.filter(i => i.status === "new").length;
 
   const tabs: { key: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },
+    { key: "products", label: "Products", icon: Package },
+    { key: "inquiries", label: "Inquiries", icon: ShoppingCart, badge: newInquiries },
     { key: "team", label: "Team", icon: Users },
+    { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
+    { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
+    { key: "employees", label: "Employees", icon: Briefcase },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },

@@ -466,7 +466,89 @@ const Admin = () => {
           </div>
         )}
 
-        {/* TESTIMONIALS TAB */}
+        {/* PRODUCTS TAB */}
+        {tab === "products" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-lg">Products ({products.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ name: "", description: "", category: "CCTV", price: 0, image_url: "", stock_status: "in_stock", display_order: 0, is_active: true }); setEditDialog("products"); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Product
+              </Button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {products.map(p => (
+                <div key={p.id} className={`rounded-xl border bg-card overflow-hidden ${p.is_active ? "border-border" : "border-border opacity-60"}`}>
+                  <div className="h-32 bg-secondary/40 flex items-center justify-center overflow-hidden">
+                    {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-8 h-8 text-muted-foreground" />}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-sm truncate flex-1">{p.name}</p>
+                      {!p.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{p.category} · {p.stock_status} · Order: {p.display_order}</p>
+                    <p className="text-sm font-semibold text-primary mt-1">KES {Number(p.price).toLocaleString()}</p>
+                    <div className="flex gap-1 mt-3">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditDialog("products"); }}><Edit className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => toggleProductActive(p.id, p.is_active)} title={p.is_active ? "Hide" : "Show"}>
+                        {p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 && <p className="text-muted-foreground text-sm">No products yet.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* INQUIRIES TAB */}
+        {tab === "inquiries" && (
+          <div>
+            <h2 className="font-display font-bold text-lg mb-4">
+              Product Inquiries ({inquiries.length}) {newInquiries > 0 && <span className="text-destructive">· {newInquiries} new</span>}
+            </h2>
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {inquiries.map(inq => {
+                const prod = products.find(p => p.id === inq.product_id);
+                return (
+                  <div key={inq.id} className={`p-4 rounded-xl border ${inq.status === "new" ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-semibold text-sm">{inq.customer_name}</p>
+                          <span className="text-xs text-muted-foreground">{inq.customer_email}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            inq.status === "new" ? "bg-primary/20 text-primary" :
+                            inq.status === "contacted" ? "bg-yellow-500/20 text-yellow-600" :
+                            inq.status === "closed" ? "bg-muted text-muted-foreground" : "bg-accent/20 text-accent"
+                          }`}>{inq.status}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-1">📞 {inq.customer_phone}</p>
+                        {prod && <p className="text-xs text-primary mb-1">Product: {prod.name}</p>}
+                        <p className="text-sm text-muted-foreground">{inq.message}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{new Date(inq.created_at).toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col gap-1 shrink-0 items-end">
+                        <select value={inq.status} onChange={e => updateInquiryStatus(inq.id, e.target.value)} className="h-8 rounded-lg border border-border bg-card px-2 text-xs">
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="quoted">Quoted</option>
+                          <option value="closed">Closed</option>
+                        </select>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteInquiry(inq.id)}><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {inquiries.length === 0 && <p className="text-muted-foreground text-sm">No inquiries yet.</p>}
+            </div>
+          </div>
+        )}
+
+
         {tab === "testimonials" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Testimonials ({testimonials.length})</h2>

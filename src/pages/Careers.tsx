@@ -34,7 +34,7 @@ const Careers = () => (
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">{job.description}</p>
                 </div>
-                <a href={`mailto:careers@tripleaatech.co.ke?subject=Application: ${job.title}`}>
+                <a href={`mailto:careers@tripleaatech.com?subject=Application: ${job.title}`}>
                   <Button size="sm" className="shrink-0">
                     <Send className="w-3.5 h-3.5 mr-1" /> Apply
                   </Button>

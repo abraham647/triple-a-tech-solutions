@@ -34,7 +34,7 @@ const Careers = () => (
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">{job.description}</p>
                 </div>
-                <a href={`mailto:careers@tripleaatech.co.ke?subject=Application: ${job.title}`}>
+                <a href={`mailto:careers@tripleaatech.com?subject=Application: ${job.title}`}>
                   <Button size="sm" className="shrink-0">
                     <Send className="w-3.5 h-3.5 mr-1" /> Apply
                   </Button>
@@ -50,10 +50,10 @@ const Careers = () => (
           <p className="text-muted-foreground text-sm mb-4 max-w-md mx-auto">
             We're always interested in hearing from talented people. Send your CV and cover letter to us and we'll keep you in mind for future openings.
           </p>
-          <a href="mailto:careers@tripleaatech.co.ke?subject=General Application">
+          <a href="mailto:careers@tripleaatech.com?subject=General Application">
             <Button><Send className="w-4 h-4 mr-1" /> Send Your CV</Button>
           </a>
-          <p className="text-xs text-muted-foreground mt-3">Or call us at <a href="tel:+254112860205" className="text-primary hover:underline">+254 112 860 205</a></p>
+          <p className="text-xs text-muted-foreground mt-3">Or call us at <a href="tel:+254112860205" className="text-primary hover:underline">+254 112 860 205</a> · <a href="https://wa.me/254732695197" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">WhatsApp +254 732 695 197</a></p>
         </div>
       </div>
     </main>

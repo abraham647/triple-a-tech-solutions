@@ -118,8 +118,11 @@ const Footer = () => {
                 <a href="tel:+254112860205" className="flex items-center gap-2 hover:text-primary transition-colors">
                   <Phone className="w-3.5 h-3.5" /> +254 112 860 205
                 </a>
-                <a href="mailto:info@tripleaatech.co.ke" className="flex items-center gap-2 hover:text-primary transition-colors">
-                  <MailIcon className="w-3.5 h-3.5" /> info@tripleaatech.co.ke
+                <a href="https://wa.me/254732695197" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <Phone className="w-3.5 h-3.5" /> +254 732 695 197 (WhatsApp)
+                </a>
+                <a href="mailto:info@tripleaatech.com" className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <MailIcon className="w-3.5 h-3.5" /> info@tripleaatech.com
                 </a>
               </div>
             </div>

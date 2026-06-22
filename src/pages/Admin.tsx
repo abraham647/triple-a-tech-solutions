@@ -311,6 +311,7 @@ const Admin = () => {
   const newInquiries = inquiries.filter(i => i.status === "new").length;
 
   const tabs: { key: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
+    { key: "overview", label: "Overview", icon: LayoutDashboard },
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },

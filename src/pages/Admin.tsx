@@ -34,7 +34,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<TabType>("services");
+  const [tab, setTab] = useState<TabType>("overview");
   const [empFilter, setEmpFilter] = useState<"all" | "active" | "released" | "suspended">("all");
 
   // Data states

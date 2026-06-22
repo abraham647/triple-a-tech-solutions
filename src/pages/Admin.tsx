@@ -394,6 +394,59 @@ const Admin = () => {
       {/* Content area */}
       <div className="container px-4 py-6 flex-1">
 
+        {/* OVERVIEW TAB */}
+        {tab === "overview" && (
+          <div>
+            <h2 className="font-display font-bold text-lg mb-4">Dashboard Overview</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+              {[
+                { label: "Products", value: products.length, icon: Package, tab: "products" as TabType },
+                { label: "New Inquiries", value: newInquiries, icon: ShoppingCart, tab: "inquiries" as TabType, highlight: newInquiries > 0 },
+                { label: "Unread Messages", value: unreadMessages, icon: Mail, tab: "messages" as TabType, highlight: unreadMessages > 0 },
+                { label: "Pending Reviews", value: testimonials.filter(t => !t.approved).length, icon: Star, tab: "testimonials" as TabType, highlight: testimonials.some(t => !t.approved) },
+                { label: "Active Employees", value: employees.filter(e => e.is_active).length, icon: Briefcase, tab: "employees" as TabType },
+                { label: "Team Members", value: teamMembers.length, icon: Users, tab: "team" as TabType },
+                { label: "Registered Users", value: users.length, icon: User, tab: "users" as TabType },
+                { label: "Services", value: services.length, icon: ShieldCheck, tab: "services" as TabType },
+              ].map(card => (
+                <button key={card.label} onClick={() => setTab(card.tab)}
+                  className={`text-left p-4 rounded-xl border bg-card hover:border-primary/50 transition-colors ${card.highlight ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+                  <card.icon className={`w-5 h-5 mb-2 ${card.highlight ? "text-primary" : "text-muted-foreground"}`} />
+                  <p className="text-2xl font-bold font-display">{card.value}</p>
+                  <p className="text-xs text-muted-foreground">{card.label}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> Latest Messages</h3>
+                <div className="space-y-2">
+                  {messages.slice(0, 4).map(m => (
+                    <div key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{m.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{new Date(m.created_at).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                  {messages.length === 0 && <p className="text-xs text-muted-foreground">No messages yet.</p>}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> Latest Inquiries</h3>
+                <div className="space-y-2">
+                  {inquiries.slice(0, 4).map(i => (
+                    <div key={i.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{i.customer_name}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{i.status}</span>
+                    </div>
+                  ))}
+                  {inquiries.length === 0 && <p className="text-xs text-muted-foreground">No inquiries yet.</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* SERVICES TAB */}
         {tab === "services" && (
           <div>

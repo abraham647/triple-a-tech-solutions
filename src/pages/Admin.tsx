@@ -14,7 +14,7 @@ import {
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, Bug, FlaskConical,
   Clock, Award, Headphones, Phone, CheckCircle, AlertCircle, PauseCircle,
-  PlayCircle, FileText, User, Package, ShoppingCart
+  PlayCircle, FileText, User, Package, ShoppingCart, LayoutDashboard, TrendingUp
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -28,13 +28,13 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries";
+type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries";
 
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<TabType>("services");
+  const [tab, setTab] = useState<TabType>("overview");
   const [empFilter, setEmpFilter] = useState<"all" | "active" | "released" | "suspended">("all");
 
   // Data states
@@ -55,6 +55,12 @@ const Admin = () => {
   const [editDialog, setEditDialog] = useState<TabType | null>(null);
   const [recordDialog, setRecordDialog] = useState<string | null>(null);
   const [newRecord, setNewRecord] = useState({ record_type: "note", title: "", description: "" });
+
+  // Employee account states
+  const [acctDialog, setAcctDialog] = useState<any>(null);
+  const [acctEmail, setAcctEmail] = useState("");
+  const [acctPassword, setAcctPassword] = useState("");
+  const [acctLoading, setAcctLoading] = useState(false);
 
   // Profile states
   const [newEmail, setNewEmail] = useState("");
@@ -175,6 +181,23 @@ const Admin = () => {
     fetchEmployees();
   };
 
+  const createEmployeeAccount = async () => {
+    if (!acctDialog || !acctEmail || !acctPassword) return;
+    setAcctLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-employee-account", {
+        body: { employee_id: acctDialog.id, email: acctEmail, password: acctPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Login account created!", description: `${acctEmail} can now sign in.` });
+      setAcctDialog(null); setAcctEmail(""); setAcctPassword("");
+      fetchEmployees();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setAcctLoading(false); }
+  };
+
   const addRecord = async (empId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("employee_records").insert({
@@ -288,6 +311,7 @@ const Admin = () => {
   const newInquiries = inquiries.filter(i => i.status === "new").length;
 
   const tabs: { key: TabType; label: string; icon: React.ElementType; badge?: number }[] = [
+    { key: "overview", label: "Overview", icon: LayoutDashboard },
     { key: "services", label: "Services", icon: ShieldCheck },
     { key: "whyus", label: "Why Us", icon: Award },
     { key: "portfolio", label: "Portfolio", icon: Image },
@@ -369,6 +393,59 @@ const Admin = () => {
 
       {/* Content area */}
       <div className="container px-4 py-6 flex-1">
+
+        {/* OVERVIEW TAB */}
+        {tab === "overview" && (
+          <div>
+            <h2 className="font-display font-bold text-lg mb-4">Dashboard Overview</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+              {[
+                { label: "Products", value: products.length, icon: Package, tab: "products" as TabType },
+                { label: "New Inquiries", value: newInquiries, icon: ShoppingCart, tab: "inquiries" as TabType, highlight: newInquiries > 0 },
+                { label: "Unread Messages", value: unreadMessages, icon: Mail, tab: "messages" as TabType, highlight: unreadMessages > 0 },
+                { label: "Pending Reviews", value: testimonials.filter(t => !t.approved).length, icon: Star, tab: "testimonials" as TabType, highlight: testimonials.some(t => !t.approved) },
+                { label: "Active Employees", value: employees.filter(e => e.is_active).length, icon: Briefcase, tab: "employees" as TabType },
+                { label: "Team Members", value: teamMembers.length, icon: Users, tab: "team" as TabType },
+                { label: "Registered Users", value: users.length, icon: User, tab: "users" as TabType },
+                { label: "Services", value: services.length, icon: ShieldCheck, tab: "services" as TabType },
+              ].map(card => (
+                <button key={card.label} onClick={() => setTab(card.tab)}
+                  className={`text-left p-4 rounded-xl border bg-card hover:border-primary/50 transition-colors ${card.highlight ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+                  <card.icon className={`w-5 h-5 mb-2 ${card.highlight ? "text-primary" : "text-muted-foreground"}`} />
+                  <p className="text-2xl font-bold font-display">{card.value}</p>
+                  <p className="text-xs text-muted-foreground">{card.label}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> Latest Messages</h3>
+                <div className="space-y-2">
+                  {messages.slice(0, 4).map(m => (
+                    <div key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{m.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{new Date(m.created_at).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                  {messages.length === 0 && <p className="text-xs text-muted-foreground">No messages yet.</p>}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl border border-border bg-card">
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> Latest Inquiries</h3>
+                <div className="space-y-2">
+                  {inquiries.slice(0, 4).map(i => (
+                    <div key={i.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="truncate">{i.customer_name}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">{i.status}</span>
+                    </div>
+                  ))}
+                  {inquiries.length === 0 && <p className="text-xs text-muted-foreground">No inquiries yet.</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SERVICES TAB */}
         {tab === "services" && (
@@ -675,6 +752,11 @@ const Admin = () => {
                         <Button size="sm" variant="ghost" onClick={() => printEmployeeCard(emp)} title="Print ID Card"><Printer className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => { setEditItem(emp); setEditDialog("employees"); }}><Edit className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => { setRecordDialog(emp.id); fetchRecords(emp.id); }} title="Records"><FileText className="w-4 h-4" /></Button>
+                        {!emp.user_id && (
+                          <Button size="sm" variant="ghost" className="text-primary" onClick={() => { setAcctDialog(emp); setAcctEmail(emp.email || ""); setAcctPassword(""); }} title="Create login account">
+                            <KeyRound className="w-4 h-4" />
+                          </Button>
+                        )}
                         {emp.is_active && (
                           <>
                             <Button size="sm" variant="ghost" className="text-yellow-600" onClick={() => suspendEmployee(emp.id)} title="Suspend">
@@ -694,6 +776,9 @@ const Admin = () => {
                     </div>
                     <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                       <span>QR: {emp.qr_code.slice(0, 8)}...</span>
+                      {emp.user_id
+                        ? <span className="text-primary flex items-center gap-1"><KeyRound className="w-3 h-3" /> Has login</span>
+                        : <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> No login</span>}
                     </div>
                   </div>
                 );
@@ -796,6 +881,29 @@ const Admin = () => {
           </div>
         )}
       </div>
+
+      {/* CREATE EMPLOYEE ACCOUNT DIALOG */}
+      <Dialog open={!!acctDialog} onOpenChange={() => setAcctDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Login for {acctDialog?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Set the first-login credentials. The employee signs in with the same login form and will be taken to their own portal. You can deactivate the account at any time.
+            </p>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={acctEmail} onChange={e => setAcctEmail(e.target.value)} placeholder="employee@email.com" className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Temporary Password</Label>
+              <Input type="text" value={acctPassword} onChange={e => setAcctPassword(e.target.value)} placeholder="At least 6 characters" minLength={6} className="rounded-xl" />
+            </div>
+            <Button onClick={createEmployeeAccount} disabled={acctLoading || !acctEmail || acctPassword.length < 6} className="w-full">
+              <KeyRound className="w-4 h-4 mr-1" /> {acctLoading ? "Creating..." : "Create Account"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* EDIT DIALOGS */}
       <Dialog open={editDialog === "services"} onOpenChange={() => setEditDialog(null)}>

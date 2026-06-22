@@ -18,6 +18,25 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const routeAfterLogin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { navigate("/"); return; }
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    if (roles?.some((r: any) => r.role === "admin")) { navigate("/admin"); return; }
+    if (roles?.some((r: any) => r.role === "employee")) {
+      const { data: emp } = await supabase.from("employees").select("is_active").eq("user_id", user.id).maybeSingle();
+      if (emp && emp.is_active) { navigate("/employee"); return; }
+      await supabase.auth.signOut();
+      toast({
+        title: "Account deactivated",
+        description: "Your account has been deactivated. Please contact your administrator.",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate("/");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,7 +70,7 @@ const Auth = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/");
+        await routeAfterLogin();
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -71,7 +90,7 @@ const Auth = () => {
         return;
       }
       if (result.redirected) return;
-      navigate("/");
+      await routeAfterLogin();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {

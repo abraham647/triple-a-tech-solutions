@@ -752,6 +752,11 @@ const Admin = () => {
                         <Button size="sm" variant="ghost" onClick={() => printEmployeeCard(emp)} title="Print ID Card"><Printer className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => { setEditItem(emp); setEditDialog("employees"); }}><Edit className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => { setRecordDialog(emp.id); fetchRecords(emp.id); }} title="Records"><FileText className="w-4 h-4" /></Button>
+                        {!emp.user_id && (
+                          <Button size="sm" variant="ghost" className="text-primary" onClick={() => { setAcctDialog(emp); setAcctEmail(emp.email || ""); setAcctPassword(""); }} title="Create login account">
+                            <KeyRound className="w-4 h-4" />
+                          </Button>
+                        )}
                         {emp.is_active && (
                           <>
                             <Button size="sm" variant="ghost" className="text-yellow-600" onClick={() => suspendEmployee(emp.id)} title="Suspend">

@@ -181,6 +181,23 @@ const Admin = () => {
     fetchEmployees();
   };
 
+  const createEmployeeAccount = async () => {
+    if (!acctDialog || !acctEmail || !acctPassword) return;
+    setAcctLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-employee-account", {
+        body: { employee_id: acctDialog.id, email: acctEmail, password: acctPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Login account created!", description: `${acctEmail} can now sign in.` });
+      setAcctDialog(null); setAcctEmail(""); setAcctPassword("");
+      fetchEmployees();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally { setAcctLoading(false); }
+  };
+
   const addRecord = async (empId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("employee_records").insert({

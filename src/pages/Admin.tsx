@@ -882,6 +882,29 @@ const Admin = () => {
         )}
       </div>
 
+      {/* CREATE EMPLOYEE ACCOUNT DIALOG */}
+      <Dialog open={!!acctDialog} onOpenChange={() => setAcctDialog(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create Login for {acctDialog?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Set the first-login credentials. The employee signs in with the same login form and will be taken to their own portal. You can deactivate the account at any time.
+            </p>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={acctEmail} onChange={e => setAcctEmail(e.target.value)} placeholder="employee@email.com" className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Temporary Password</Label>
+              <Input type="text" value={acctPassword} onChange={e => setAcctPassword(e.target.value)} placeholder="At least 6 characters" minLength={6} className="rounded-xl" />
+            </div>
+            <Button onClick={createEmployeeAccount} disabled={acctLoading || !acctEmail || acctPassword.length < 6} className="w-full">
+              <KeyRound className="w-4 h-4 mr-1" /> {acctLoading ? "Creating..." : "Create Account"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* EDIT DIALOGS */}
       <Dialog open={editDialog === "services"} onOpenChange={() => setEditDialog(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto">

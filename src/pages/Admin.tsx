@@ -56,6 +56,12 @@ const Admin = () => {
   const [recordDialog, setRecordDialog] = useState<string | null>(null);
   const [newRecord, setNewRecord] = useState({ record_type: "note", title: "", description: "" });
 
+  // Employee account states
+  const [acctDialog, setAcctDialog] = useState<any>(null);
+  const [acctEmail, setAcctEmail] = useState("");
+  const [acctPassword, setAcctPassword] = useState("");
+  const [acctLoading, setAcctLoading] = useState(false);
+
   // Profile states
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");

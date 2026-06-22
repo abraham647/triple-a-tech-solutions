@@ -776,6 +776,9 @@ const Admin = () => {
                     </div>
                     <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                       <span>QR: {emp.qr_code.slice(0, 8)}...</span>
+                      {emp.user_id
+                        ? <span className="text-primary flex items-center gap-1"><KeyRound className="w-3 h-3" /> Has login</span>
+                        : <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> No login</span>}
                     </div>
                   </div>
                 );

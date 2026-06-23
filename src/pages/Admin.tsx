@@ -187,7 +187,7 @@ const Admin = () => {
     setAcctLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-employee-account", {
-        body: { employee_id: acctDialog.id, email: acctEmail, password: acctPassword },
+        body: { employee_id: acctDialog.id, email: acctEmail, password: acctPassword, department: acctDept },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

@@ -17,6 +17,7 @@ import {
   PlayCircle, FileText, User, Package, ShoppingCart, LayoutDashboard, TrendingUp
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 // Icon map for dynamic icon selection
 const iconMap: Record<string, React.ElementType> = {

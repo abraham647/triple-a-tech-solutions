@@ -60,6 +60,7 @@ const Admin = () => {
   const [acctDialog, setAcctDialog] = useState<any>(null);
   const [acctEmail, setAcctEmail] = useState("");
   const [acctPassword, setAcctPassword] = useState("");
+  const [acctDept, setAcctDept] = useState("employee");
   const [acctLoading, setAcctLoading] = useState(false);
 
   // Profile states

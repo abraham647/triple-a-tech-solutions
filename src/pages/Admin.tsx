@@ -893,6 +893,16 @@ const Admin = () => {
               <Input type="email" value={acctEmail} onChange={e => setAcctEmail(e.target.value)} placeholder="employee@email.com" className="rounded-xl" />
             </div>
             <div className="space-y-2">
+              <Label>Department / Access</Label>
+              <select value={acctDept} onChange={e => setAcctDept(e.target.value)} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                <option value="employee">General Employee (profile only)</option>
+                <option value="sales_agent">Sales Agent (manage inquiries & products)</option>
+                <option value="technician">Technician (view assignments)</option>
+                <option value="manager">Manager (inquiries, products & messages)</option>
+              </select>
+              <p className="text-xs text-muted-foreground">Determines the dashboard tools the employee sees in their portal.</p>
+            </div>
+            <div className="space-y-2">
               <Label>Temporary Password</Label>
               <Input type="text" value={acctPassword} onChange={e => setAcctPassword(e.target.value)} placeholder="At least 6 characters" minLength={6} className="rounded-xl" />
             </div>

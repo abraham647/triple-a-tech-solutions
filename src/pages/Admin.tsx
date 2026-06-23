@@ -443,6 +443,34 @@ const Admin = () => {
                 </div>
               </div>
             </div>
+
+            {/* Content distribution pie chart */}
+            <div className="mt-4 p-4 rounded-xl border border-border bg-card">
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> Content Distribution</h3>
+              {(() => {
+                const pieData = [
+                  { name: "Products", value: products.length },
+                  { name: "Inquiries", value: inquiries.length },
+                  { name: "Messages", value: messages.length },
+                  { name: "Reviews", value: testimonials.length },
+                  { name: "Employees", value: employees.length },
+                  { name: "Services", value: services.length },
+                ].filter(d => d.value > 0);
+                const COLORS = ["hsl(var(--primary))", "#f59e0b", "#3b82f6", "#ec4899", "#10b981", "#8b5cf6"];
+                if (pieData.length === 0) return <p className="text-xs text-muted-foreground">No data to display yet.</p>;
+                return (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={(e: any) => `${e.name}: ${e.value}`}>
+                        {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </div>
           </div>
         )}
 

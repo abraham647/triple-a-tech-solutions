@@ -192,7 +192,7 @@ const Admin = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Login account created!", description: `${acctEmail} can now sign in.` });
-      setAcctDialog(null); setAcctEmail(""); setAcctPassword("");
+      setAcctDialog(null); setAcctEmail(""); setAcctPassword(""); setAcctDept("employee");
       fetchEmployees();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

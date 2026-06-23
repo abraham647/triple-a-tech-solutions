@@ -31,8 +31,11 @@ Deno.serve(async (req) => {
     const isAdmin = roles?.some((r: any) => r.role === "admin");
     if (!isAdmin) throw new Error("Only admins can create employee accounts");
 
-    const { employee_id, email, password } = await req.json();
+    const { employee_id, email, password, department } = await req.json();
     if (!employee_id || !email || !password) throw new Error("Missing required fields");
+
+    const ALLOWED_ROLES = ["employee", "sales_agent", "technician", "manager"];
+    const assignedRole = ALLOWED_ROLES.includes(department) ? department : "employee";
 
     // Create the auth user for the employee
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
@@ -52,10 +55,14 @@ Deno.serve(async (req) => {
       .eq("id", employee_id);
     if (linkErr) throw linkErr;
 
-    // Assign the employee role
+    // Assign base employee role plus the department-specific role
+    const rolesToInsert = [{ user_id: newUserId, role: "employee" }];
+    if (assignedRole !== "employee") {
+      rolesToInsert.push({ user_id: newUserId, role: assignedRole });
+    }
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: newUserId, role: "employee" });
+      .insert(rolesToInsert);
     if (roleErr) throw roleErr;
 
     return new Response(JSON.stringify({ message: "Employee account created", user_id: newUserId }), {

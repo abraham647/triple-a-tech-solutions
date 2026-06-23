@@ -17,6 +17,7 @@ import {
   PlayCircle, FileText, User, Package, ShoppingCart, LayoutDashboard, TrendingUp
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 // Icon map for dynamic icon selection
 const iconMap: Record<string, React.ElementType> = {
@@ -60,6 +61,7 @@ const Admin = () => {
   const [acctDialog, setAcctDialog] = useState<any>(null);
   const [acctEmail, setAcctEmail] = useState("");
   const [acctPassword, setAcctPassword] = useState("");
+  const [acctDept, setAcctDept] = useState("employee");
   const [acctLoading, setAcctLoading] = useState(false);
 
   // Profile states
@@ -186,12 +188,12 @@ const Admin = () => {
     setAcctLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-employee-account", {
-        body: { employee_id: acctDialog.id, email: acctEmail, password: acctPassword },
+        body: { employee_id: acctDialog.id, email: acctEmail, password: acctPassword, department: acctDept },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Login account created!", description: `${acctEmail} can now sign in.` });
-      setAcctDialog(null); setAcctEmail(""); setAcctPassword("");
+      setAcctDialog(null); setAcctEmail(""); setAcctPassword(""); setAcctDept("employee");
       fetchEmployees();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -321,9 +323,6 @@ const Admin = () => {
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
-    { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
-    { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
-    { key: "employees", label: "Employees", icon: Briefcase },
     { key: "users", label: "Users", icon: Users },
     { key: "profile", label: "Profile", icon: Settings },
   ];
@@ -443,6 +442,34 @@ const Admin = () => {
                   {inquiries.length === 0 && <p className="text-xs text-muted-foreground">No inquiries yet.</p>}
                 </div>
               </div>
+            </div>
+
+            {/* Content distribution pie chart */}
+            <div className="mt-4 p-4 rounded-xl border border-border bg-card">
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" /> Content Distribution</h3>
+              {(() => {
+                const pieData = [
+                  { name: "Products", value: products.length },
+                  { name: "Inquiries", value: inquiries.length },
+                  { name: "Messages", value: messages.length },
+                  { name: "Reviews", value: testimonials.length },
+                  { name: "Employees", value: employees.length },
+                  { name: "Services", value: services.length },
+                ].filter(d => d.value > 0);
+                const COLORS = ["hsl(var(--primary))", "#f59e0b", "#3b82f6", "#ec4899", "#10b981", "#8b5cf6"];
+                if (pieData.length === 0) return <p className="text-xs text-muted-foreground">No data to display yet.</p>;
+                return (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={(e: any) => `${e.name}: ${e.value}`}>
+                        {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -893,6 +920,16 @@ const Admin = () => {
             <div className="space-y-2">
               <Label>Email</Label>
               <Input type="email" value={acctEmail} onChange={e => setAcctEmail(e.target.value)} placeholder="employee@email.com" className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Department / Access</Label>
+              <select value={acctDept} onChange={e => setAcctDept(e.target.value)} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                <option value="employee">General Employee (profile only)</option>
+                <option value="sales_agent">Sales Agent (manage inquiries & products)</option>
+                <option value="technician">Technician (view assignments)</option>
+                <option value="manager">Manager (inquiries, products & messages)</option>
+              </select>
+              <p className="text-xs text-muted-foreground">Determines the dashboard tools the employee sees in their portal.</p>
             </div>
             <div className="space-y-2">
               <Label>Temporary Password</Label>

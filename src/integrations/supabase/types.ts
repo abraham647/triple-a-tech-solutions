@@ -456,6 +456,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_my_employee_profile: {
+        Args: { p_name: string; p_phone: string; p_photo_url: string }
+        Returns: {
+          created_at: string
+          email: string | null
+          hired_at: string
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          photo_url: string | null
+          qr_code: string
+          released_at: string | null
+          role: string
+          suspended_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "employees"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role:

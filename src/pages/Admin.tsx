@@ -1056,12 +1056,33 @@ const Admin = () => {
                 <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
               </div>
               <div className="space-y-2">
-                <Label>Image</Label>
+                <Label>Main Image</Label>
                 <Input type="file" accept="image/*" onChange={async e => {
                   const file = e.target.files?.[0];
                   if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
                 }} className="rounded-xl" />
                 {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
+              </div>
+              <div className="space-y-2">
+                <Label>More Images (gallery)</Label>
+                <Input type="file" accept="image/*" multiple onChange={async e => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length === 0) return;
+                  const urls: string[] = [];
+                  for (const f of files) { const url = await handleImageUpload(f); if (url) urls.push(url); }
+                  setEditItem({ ...editItem, images: [...(Array.isArray(editItem.images) ? editItem.images : []), ...urls] });
+                }} className="rounded-xl" />
+                {Array.isArray(editItem.images) && editItem.images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {editItem.images.map((img: string, i: number) => (
+                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => setEditItem({ ...editItem, images: editItem.images.filter((_: string, idx: number) => idx !== i) })} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center text-xs">×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">Add multiple photos so customers can view the product from different angles.</p>
               </div>
               {editItem.id && (
                 <div className="flex items-center gap-2">

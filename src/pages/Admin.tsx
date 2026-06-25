@@ -869,6 +869,38 @@ const Admin = () => {
           </div>
         )}
 
+        {tab === "about" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-lg">About Us Content ({aboutSections.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ section_type: "info", title: "", content: "", image_url: "", display_order: 0, is_visible: true }); setEditDialog("about"); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Info
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Add, edit or delete information shown on the About Us page (e.g. mission, vision, history, milestones).</p>
+            <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+              {aboutSections.map(s => (
+                <div key={s.id} className={`p-4 rounded-xl border ${s.is_visible ? "border-border bg-card" : "border-border bg-muted/50 opacity-60"} flex items-center justify-between`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {s.image_url && <img src={s.image_url} alt={s.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{s.title}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{s.section_type} · Order: {s.display_order}</p>
+                      {s.content && <p className="text-xs text-muted-foreground truncate max-w-xs">{s.content.slice(0, 80)}</p>}
+                      {!s.is_visible && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(s); setEditDialog("about"); }}><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAboutSection(s.id)}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              ))}
+              {aboutSections.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No About Us info yet. Add content to display on the About page.</p>}
+            </div>
+          </div>
+        )}
+
         {tab === "users" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Users ({users.length})</h2>

@@ -1070,8 +1070,8 @@ const Admin = () => {
                 <Input value={editItem.name} onChange={e => {
                   const name = e.target.value;
                   const parts = name.trim().split(/\s+/);
-                  const autoEmail = parts.length >= 2 ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.co.ke`
-                    : parts.length === 1 && parts[0] ? `${parts[0].toLowerCase()}@tripleaatech.co.ke` : "";
+                  const autoEmail = parts.length >= 2 ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.com`
+                    : parts.length === 1 && parts[0] ? `${parts[0].toLowerCase()}@tripleaatech.com` : "";
                   setEditItem({ ...editItem, name, email: autoEmail });
                 }} className="rounded-xl" />
               </div>

@@ -50,6 +50,7 @@ const Admin = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
+  const [aboutSections, setAboutSections] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);

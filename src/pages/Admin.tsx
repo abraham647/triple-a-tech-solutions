@@ -29,7 +29,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries";
+type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries" | "about";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -50,6 +50,7 @@ const Admin = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
+  const [aboutSections, setAboutSections] = useState<any[]>([]);
 
   // Edit states
   const [editItem, setEditItem] = useState<any>(null);
@@ -99,7 +100,7 @@ const Admin = () => {
   const fetchAll = () => {
     fetchServices(); fetchWhyUs(); fetchPortfolio();
     fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
-    fetchProducts(); fetchInquiries();
+    fetchProducts(); fetchInquiries(); fetchAboutSections();
   };
 
   const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };
@@ -112,6 +113,20 @@ const Admin = () => {
   const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
   const fetchProducts = async () => { const { data } = await supabase.from("products").select("*").order("display_order"); if (data) setProducts(data); };
   const fetchInquiries = async () => { const { data } = await supabase.from("product_inquiries").select("*").order("created_at", { ascending: false }); if (data) setInquiries(data); };
+  const fetchAboutSections = async () => { const { data } = await supabase.from("about_sections").select("*").order("display_order"); if (data) setAboutSections(data); };
+
+  const saveAboutSection = async (item: any) => {
+    const payload = { section_type: item.section_type || "info", title: item.title, content: item.content, image_url: item.image_url, display_order: item.display_order || 0, is_visible: item.is_visible ?? true };
+    if (item.id) {
+      const { error } = await supabase.from("about_sections").update(payload).eq("id", item.id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    } else {
+      const { error } = await supabase.from("about_sections").insert(payload);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
+    toast({ title: "Saved!" }); setEditDialog(null); fetchAboutSections();
+  };
+  const deleteAboutSection = async (id: string) => { await supabase.from("about_sections").delete().eq("id", id); fetchAboutSections(); };
 
   const fetchRecords = async (empId: string) => {
     const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });
@@ -232,6 +247,7 @@ const Admin = () => {
     const payload = {
       name: item.name, description: item.description, category: item.category,
       price: Number(item.price) || 0, image_url: item.image_url,
+      images: Array.isArray(item.images) ? item.images : [],
       stock_status: item.stock_status, display_order: item.display_order || 0,
       is_active: item.is_active ?? true,
     };
@@ -320,6 +336,7 @@ const Admin = () => {
     { key: "products", label: "Products", icon: Package },
     { key: "inquiries", label: "Inquiries", icon: ShoppingCart, badge: newInquiries },
     { key: "team", label: "Team", icon: Users },
+    { key: "about", label: "About Us", icon: FileText },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
@@ -852,6 +869,38 @@ const Admin = () => {
           </div>
         )}
 
+        {tab === "about" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display font-bold text-lg">About Us Content ({aboutSections.length})</h2>
+              <Button size="sm" onClick={() => { setEditItem({ section_type: "info", title: "", content: "", image_url: "", display_order: 0, is_visible: true }); setEditDialog("about"); }}>
+                <Plus className="w-4 h-4 mr-1" /> Add Info
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Add, edit or delete information shown on the About Us page (e.g. mission, vision, history, milestones).</p>
+            <div className="space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+              {aboutSections.map(s => (
+                <div key={s.id} className={`p-4 rounded-xl border ${s.is_visible ? "border-border bg-card" : "border-border bg-muted/50 opacity-60"} flex items-center justify-between`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {s.image_url && <img src={s.image_url} alt={s.title} className="w-12 h-12 rounded-lg object-cover shrink-0" />}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{s.title}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{s.section_type} · Order: {s.display_order}</p>
+                      {s.content && <p className="text-xs text-muted-foreground truncate max-w-xs">{s.content.slice(0, 80)}</p>}
+                      {!s.is_visible && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(s); setEditDialog("about"); }}><Edit className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteAboutSection(s.id)}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              ))}
+              {aboutSections.length === 0 && <p className="text-muted-foreground text-sm text-center py-8">No About Us info yet. Add content to display on the About page.</p>}
+            </div>
+          </div>
+        )}
+
         {tab === "users" && (
           <div>
             <h2 className="font-display font-bold text-lg mb-4">Users ({users.length})</h2>
@@ -1039,12 +1088,33 @@ const Admin = () => {
                 <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
               </div>
               <div className="space-y-2">
-                <Label>Image</Label>
+                <Label>Main Image</Label>
                 <Input type="file" accept="image/*" onChange={async e => {
                   const file = e.target.files?.[0];
                   if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
                 }} className="rounded-xl" />
                 {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
+              </div>
+              <div className="space-y-2">
+                <Label>More Images (gallery)</Label>
+                <Input type="file" accept="image/*" multiple onChange={async e => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length === 0) return;
+                  const urls: string[] = [];
+                  for (const f of files) { const url = await handleImageUpload(f); if (url) urls.push(url); }
+                  setEditItem({ ...editItem, images: [...(Array.isArray(editItem.images) ? editItem.images : []), ...urls] });
+                }} className="rounded-xl" />
+                {Array.isArray(editItem.images) && editItem.images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {editItem.images.map((img: string, i: number) => (
+                      <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => setEditItem({ ...editItem, images: editItem.images.filter((_: string, idx: number) => idx !== i) })} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center text-xs">×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">Add multiple photos so customers can view the product from different angles.</p>
               </div>
               {editItem.id && (
                 <div className="flex items-center gap-2">
@@ -1070,8 +1140,8 @@ const Admin = () => {
                 <Input value={editItem.name} onChange={e => {
                   const name = e.target.value;
                   const parts = name.trim().split(/\s+/);
-                  const autoEmail = parts.length >= 2 ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.co.ke`
-                    : parts.length === 1 && parts[0] ? `${parts[0].toLowerCase()}@tripleaatech.co.ke` : "";
+                  const autoEmail = parts.length >= 2 ? `${parts[0].toLowerCase()}.${parts.slice(1).join('').toLowerCase()}@tripleaatech.com`
+                    : parts.length === 1 && parts[0] ? `${parts[0].toLowerCase()}@tripleaatech.com` : "";
                   setEditItem({ ...editItem, name, email: autoEmail });
                 }} className="rounded-xl" />
               </div>
@@ -1205,6 +1275,44 @@ const Admin = () => {
                 </div>
               )}
               <Button onClick={() => saveTeamMember(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editDialog === "about"} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} About Info</DialogTitle></DialogHeader>
+          {editItem && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <select value={editItem.section_type} onChange={e => setEditItem({ ...editItem, section_type: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                  <option value="info">General Info</option>
+                  <option value="mission">Mission</option>
+                  <option value="vision">Vision</option>
+                  <option value="history">History</option>
+                  <option value="milestone">Milestone</option>
+                </select>
+              </div>
+              <div className="space-y-2"><Label>Title</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Content</Label><Textarea value={editItem.content || ""} onChange={e => setEditItem({ ...editItem, content: e.target.value })} className="rounded-xl" rows={5} /></div>
+              <div className="space-y-2">
+                <Label>Image (optional)</Label>
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
+                }} className="rounded-xl" />
+                {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
+              </div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
+              {editItem.id && (
+                <div className="flex items-center gap-2">
+                  <Label>Visible on About page</Label>
+                  <input type="checkbox" checked={editItem.is_visible} onChange={e => setEditItem({ ...editItem, is_visible: e.target.checked })} />
+                </div>
+              )}
+              <Button onClick={() => saveAboutSection(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
             </div>
           )}
         </DialogContent>

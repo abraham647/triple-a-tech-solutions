@@ -7,11 +7,14 @@ import founderImg from "@/assets/founder.jpg";
 
 const About = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [sections, setSections] = useState<any[]>([]);
 
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase.from("team_members").select("*").eq("is_visible", true).order("display_order");
       if (data) setTeamMembers(data);
+      const { data: secs } = await supabase.from("about_sections").select("*").eq("is_visible", true).order("display_order");
+      if (secs) setSections(secs);
     };
     fetch();
   }, []);
@@ -56,6 +59,26 @@ const About = () => {
             </div>
           </div>
         </section>
+
+        {/* Dynamic About info - managed from Admin */}
+        {sections.length > 0 && (
+          <section className="py-16">
+            <div className="container px-4 max-w-4xl mx-auto space-y-6">
+              {sections.map(s => (
+                <div key={s.id} className="p-8 rounded-xl bg-card border border-border glow-card hover:border-primary/20 transition-all md:flex gap-6 items-start">
+                  {s.image_url && <img src={s.image_url} alt={s.title} className="w-full md:w-48 h-40 object-cover rounded-lg mb-4 md:mb-0 shrink-0" />}
+                  <div>
+                    <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-1">{s.section_type}</p>
+                    <h3 className="font-display font-bold text-xl mb-3">{s.title}</h3>
+                    {s.content && <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">{s.content}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+
 
         {/* Founder */}
         <section className="py-20 md:py-28">

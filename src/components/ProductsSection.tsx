@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowRight, MessageSquare } from "lucide-react";
+import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ProductInquiryDialog from "./ProductInquiryDialog";
 
 export const formatPrice = (price: number) =>
@@ -17,17 +18,35 @@ export const stockLabel: Record<string, { text: string; cls: string }> = {
   preorder: { text: "Pre-order", cls: "bg-primary/20 text-primary" },
 };
 
+export const getGallery = (product: any): string[] => {
+  const extra = Array.isArray(product.images) ? product.images : [];
+  return Array.from(new Set([product.image_url, ...extra].filter(Boolean)));
+};
+
 export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (p: any) => void }) => {
   const stock = stockLabel[product.stock_status] || stockLabel.in_stock;
+  const gallery = getGallery(product);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [active, setActive] = useState(0);
+
+  const openGallery = (i = 0) => { if (gallery.length === 0) return; setActive(i); setGalleryOpen(true); };
+  const prev = () => setActive(a => (a - 1 + gallery.length) % gallery.length);
+  const next = () => setActive(a => (a + 1) % gallery.length);
+
   return (
     <div className="group rounded-xl border border-border bg-card overflow-hidden flex flex-col glow-card glow-card-hover transition-all duration-300 hover:border-primary/30">
-      <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden">
-        {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+      <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => openGallery(0)}>
+        {gallery[0] ? (
+          <img src={gallery[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <Package className="w-12 h-12 text-muted-foreground" />
         )}
         <span className={`absolute top-3 right-3 text-xs px-2 py-1 rounded-full ${stock.cls}`}>{stock.text}</span>
+        {gallery.length > 1 && (
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-black/60 text-white">
+            <Images className="w-3 h-3" /> {gallery.length} photos
+          </span>
+        )}
       </div>
       <div className="p-5 flex flex-col flex-1">
         <span className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">{product.category}</span>
@@ -49,6 +68,35 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
           Chat on WhatsApp
         </a>
       </div>
+
+      {/* Kilimall-style image gallery modal */}
+      <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+          <div className="relative bg-black flex items-center justify-center aspect-square sm:aspect-video">
+            {gallery[active] && <img src={gallery[active]} alt={`${product.name} ${active + 1}`} className="max-h-full max-w-full object-contain" />}
+            {gallery.length > 1 && (
+              <>
+                <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center"><ChevronLeft className="w-5 h-5" /></button>
+                <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white flex items-center justify-center"><ChevronRight className="w-5 h-5" /></button>
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs px-2 py-1 rounded-full bg-black/60 text-white">{active + 1} / {gallery.length}</span>
+              </>
+            )}
+          </div>
+          <div className="p-4">
+            <h3 className="font-display font-semibold mb-1">{product.name}</h3>
+            <p className="font-display font-bold text-primary mb-3">{formatPrice(Number(product.price))}</p>
+            {gallery.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {gallery.map((img, i) => (
+                  <button key={i} onClick={() => setActive(i)} className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${i === active ? "border-primary" : "border-transparent"}`}>
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

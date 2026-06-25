@@ -7,11 +7,14 @@ import founderImg from "@/assets/founder.jpg";
 
 const About = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [sections, setSections] = useState<any[]>([]);
 
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase.from("team_members").select("*").eq("is_visible", true).order("display_order");
       if (data) setTeamMembers(data);
+      const { data: secs } = await supabase.from("about_sections").select("*").eq("is_visible", true).order("display_order");
+      if (secs) setSections(secs);
     };
     fetch();
   }, []);

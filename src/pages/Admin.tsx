@@ -336,6 +336,7 @@ const Admin = () => {
     { key: "products", label: "Products", icon: Package },
     { key: "inquiries", label: "Inquiries", icon: ShoppingCart, badge: newInquiries },
     { key: "team", label: "Team", icon: Users },
+    { key: "about", label: "About Us", icon: FileText },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },

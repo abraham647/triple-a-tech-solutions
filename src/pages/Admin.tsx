@@ -232,6 +232,7 @@ const Admin = () => {
     const payload = {
       name: item.name, description: item.description, category: item.category,
       price: Number(item.price) || 0, image_url: item.image_url,
+      images: Array.isArray(item.images) ? item.images : [],
       stock_status: item.stock_status, display_order: item.display_order || 0,
       is_active: item.is_active ?? true,
     };

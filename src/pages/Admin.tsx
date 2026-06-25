@@ -29,7 +29,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries";
+type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries" | "about";
 
 const Admin = () => {
   const navigate = useNavigate();

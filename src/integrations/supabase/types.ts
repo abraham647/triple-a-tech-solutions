@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_sections: {
+        Row: {
+          content: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          is_visible: boolean
+          section_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean
+          section_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean
+          section_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           admin_notes: string | null
@@ -227,6 +263,7 @@ export type Database = {
           display_order: number
           id: string
           image_url: string | null
+          images: Json
           is_active: boolean
           name: string
           price: number
@@ -240,6 +277,7 @@ export type Database = {
           display_order?: number
           id?: string
           image_url?: string | null
+          images?: Json
           is_active?: boolean
           name: string
           price?: number
@@ -253,6 +291,7 @@ export type Database = {
           display_order?: number
           id?: string
           image_url?: string | null
+          images?: Json
           is_active?: boolean
           name?: string
           price?: number

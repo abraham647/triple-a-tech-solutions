@@ -1279,6 +1279,44 @@ const Admin = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editDialog === "about"} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editItem?.id ? "Edit" : "Add"} About Info</DialogTitle></DialogHeader>
+          {editItem && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <select value={editItem.section_type} onChange={e => setEditItem({ ...editItem, section_type: e.target.value })} className="w-full h-10 rounded-xl border border-border bg-card px-3 text-sm">
+                  <option value="info">General Info</option>
+                  <option value="mission">Mission</option>
+                  <option value="vision">Vision</option>
+                  <option value="history">History</option>
+                  <option value="milestone">Milestone</option>
+                </select>
+              </div>
+              <div className="space-y-2"><Label>Title</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
+              <div className="space-y-2"><Label>Content</Label><Textarea value={editItem.content || ""} onChange={e => setEditItem({ ...editItem, content: e.target.value })} className="rounded-xl" rows={5} /></div>
+              <div className="space-y-2">
+                <Label>Image (optional)</Label>
+                <Input type="file" accept="image/*" onChange={async e => {
+                  const file = e.target.files?.[0];
+                  if (file) { const url = await handleImageUpload(file); if (url) setEditItem({ ...editItem, image_url: url }); }
+                }} className="rounded-xl" />
+                {editItem.image_url && <img src={editItem.image_url} alt="Preview" className="w-full h-32 object-cover rounded-lg mt-2" />}
+              </div>
+              <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
+              {editItem.id && (
+                <div className="flex items-center gap-2">
+                  <Label>Visible on About page</Label>
+                  <input type="checkbox" checked={editItem.is_visible} onChange={e => setEditItem({ ...editItem, is_visible: e.target.checked })} />
+                </div>
+              )}
+              <Button onClick={() => saveAboutSection(editItem)} className="w-full"><Save className="w-4 h-4 mr-1" /> Save</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

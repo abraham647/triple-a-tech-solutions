@@ -113,6 +113,20 @@ const Admin = () => {
   const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
   const fetchProducts = async () => { const { data } = await supabase.from("products").select("*").order("display_order"); if (data) setProducts(data); };
   const fetchInquiries = async () => { const { data } = await supabase.from("product_inquiries").select("*").order("created_at", { ascending: false }); if (data) setInquiries(data); };
+  const fetchAboutSections = async () => { const { data } = await supabase.from("about_sections").select("*").order("display_order"); if (data) setAboutSections(data); };
+
+  const saveAboutSection = async (item: any) => {
+    const payload = { section_type: item.section_type || "info", title: item.title, content: item.content, image_url: item.image_url, display_order: item.display_order || 0, is_visible: item.is_visible ?? true };
+    if (item.id) {
+      const { error } = await supabase.from("about_sections").update(payload).eq("id", item.id);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    } else {
+      const { error } = await supabase.from("about_sections").insert(payload);
+      if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    }
+    toast({ title: "Saved!" }); setEditDialog(null); fetchAboutSections();
+  };
+  const deleteAboutSection = async (id: string) => { await supabase.from("about_sections").delete().eq("id", id); fetchAboutSections(); };
 
   const fetchRecords = async (empId: string) => {
     const { data } = await supabase.from("employee_records").select("*").eq("employee_id", empId).order("created_at", { ascending: false });

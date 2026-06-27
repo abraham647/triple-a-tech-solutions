@@ -105,10 +105,6 @@ const ChartTooltipContent = React.forwardRef<
       active,
       payload,
       className,
-      ...
-    }: any,
-    ref,
-  ) => {
       indicator = "dot",
       hideLabel = false,
       hideIndicator = false,
@@ -119,7 +115,7 @@ const ChartTooltipContent = React.forwardRef<
       color,
       nameKey,
       labelKey,
-    },
+    }: any,
     ref,
   ) => {
     const { config } = useChart();

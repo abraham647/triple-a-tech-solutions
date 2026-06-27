@@ -1291,12 +1291,18 @@ const Admin = () => {
                   <option value="info">General Info</option>
                   <option value="mission">Mission</option>
                   <option value="vision">Vision</option>
+                  <option value="leadership">Leadership</option>
+                  <option value="value">Core Value</option>
                   <option value="history">History</option>
                   <option value="milestone">Milestone</option>
                 </select>
+                <p className="text-xs text-muted-foreground">Mission/Vision and Leadership appear once each. Add multiple "Core Value" cards.</p>
               </div>
-              <div className="space-y-2"><Label>Title</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
-              <div className="space-y-2"><Label>Content</Label><Textarea value={editItem.content || ""} onChange={e => setEditItem({ ...editItem, content: e.target.value })} className="rounded-xl" rows={5} /></div>
+              <div className="space-y-2"><Label>{editItem.section_type === "leadership" ? "Name" : "Title"}</Label><Input value={editItem.title} onChange={e => setEditItem({ ...editItem, title: e.target.value })} className="rounded-xl" /></div>
+              {editItem.section_type === "leadership" && (
+                <div className="space-y-2"><Label>Position / Role</Label><Input value={editItem.content?.split("||")[1] || ""} onChange={e => { const bio = editItem.content?.split("||")[0] || ""; setEditItem({ ...editItem, content: `${bio}||${e.target.value}` }); }} className="rounded-xl" placeholder="e.g. Founder & CEO" /></div>
+              )}
+              <div className="space-y-2"><Label>{editItem.section_type === "leadership" ? "Bio" : "Content"}</Label><Textarea value={editItem.section_type === "leadership" ? (editItem.content?.split("||")[0] || "") : (editItem.content || "")} onChange={e => { if (editItem.section_type === "leadership") { const role = editItem.content?.split("||")[1] || ""; setEditItem({ ...editItem, content: `${e.target.value}||${role}` }); } else { setEditItem({ ...editItem, content: e.target.value }); } }} className="rounded-xl" rows={5} /></div>
               <div className="space-y-2">
                 <Label>Image (optional)</Label>
                 <Input type="file" accept="image/*" onChange={async e => {

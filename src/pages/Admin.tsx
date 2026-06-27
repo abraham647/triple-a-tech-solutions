@@ -304,20 +304,28 @@ const Admin = () => {
   };
 
   const printEmployeeCard = (emp: any) => {
-    const verifyUrl = `${window.location.origin}/verify/${emp.qr_code}`;
+    const esc = (s: any) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    const verifyUrl = `${window.location.origin}/verify/${esc(emp.qr_code)}`;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>Employee ID - ${emp.name}</title>
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Employee ID - ${esc(emp.name)}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f0f0f0}.card{width:340px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;overflow:hidden;color:#fff;box-shadow:0 20px 40px rgba(0,0,0,.3)}.header{background:linear-gradient(135deg,#3b82f6,#2563eb);padding:16px;text-align:center}.header h2{font-size:18px;font-weight:700}.header p{font-size:10px;opacity:.8;margin-top:2px}.body{padding:24px;text-align:center}.photo{width:80px;height:80px;border-radius:50%;border:3px solid #3b82f6;margin:0 auto 12px;background:#334155;display:flex;align-items:center;justify-content:center;overflow:hidden}.photo img{width:100%;height:100%;object-fit:cover}.name{font-size:20px;font-weight:700}.role{color:#3b82f6;font-size:14px;margin:4px 0 16px}.details{font-size:12px;color:#94a3b8;line-height:1.8}.qr{margin:16px auto 0;background:#fff;padding:8px;border-radius:8px;display:inline-block}.footer{text-align:center;padding:12px;font-size:9px;color:#64748b;border-top:1px solid #334155}@media print{body{background:none}.card{box-shadow:none}}</style></head><body>
       <div class="card"><div class="header"><h2>🛡️ Triple A Tech Solutions</h2><p>Security & Technology</p></div>
-      <div class="body"><div class="photo">${emp.photo_url ? `<img src="${emp.photo_url}" />` : "👤"}</div>
-      <div class="name">${emp.name}</div><div class="role">${emp.role}</div>
-      <div class="details">${emp.phone ? `📞 ${emp.phone}<br/>` : ""}${emp.email ? `✉️ ${emp.email}<br/>` : ""}ID: ${emp.qr_code.slice(0, 8).toUpperCase()}</div>
+      <div class="body"><div class="photo">${emp.photo_url ? `<img src="${esc(emp.photo_url)}" />` : "👤"}</div>
+      <div class="name">${esc(emp.name)}</div><div class="role">${esc(emp.role)}</div>
+      <div class="details">${emp.phone ? `📞 ${esc(emp.phone)}<br/>` : ""}${emp.email ? `✉️ ${esc(emp.email)}<br/>` : ""}ID: ${esc(String(emp.qr_code).slice(0, 8).toUpperCase())}</div>
       <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(verifyUrl)}" width="120" height="120" /></div></div>
       <div class="footer">Scan QR code to verify employee · ${new Date().getFullYear()}</div></div>
       <script>setTimeout(()=>window.print(),500)<\/script></body></html>`);
     printWindow.document.close();
   };
+
 
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate("/"); };
 

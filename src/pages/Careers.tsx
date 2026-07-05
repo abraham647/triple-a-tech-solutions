@@ -13,6 +13,11 @@ const openings = [
 
 const Careers = () => (
   <>
+    <SEO
+      title="Careers | Triple A Tech Solutions"
+      description="Join Triple A Tech Solutions. Explore open roles in security, CCTV, cyber security and sales. Build your career with Kenya's trusted security partner."
+      path="/careers"
+    />
     <Navbar />
     <main className="pt-16 min-h-screen">
       <div className="container px-4 py-12 max-w-4xl mx-auto">

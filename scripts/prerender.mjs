@@ -35,15 +35,22 @@ async function main() {
   const vite = await createServer({
     mode: "production",
     define,
+    resolve: {
+      alias: {
+        "react-router-dom": path.join(
+          ROOT,
+          "node_modules/react-router-dom/dist/index.mjs"
+        ),
+        "react-router": path.join(
+          ROOT,
+          "node_modules/react-router/dist/development/index.mjs"
+        ),
+      },
+    },
     server: { middlewareMode: true, hmr: false, watch: null },
     optimizeDeps: { noDiscovery: true },
     ssr: {
-      noExternal: [
-        "react-router-dom",
-        "react-router",
-        "react-helmet-async",
-        "@tanstack/react-query",
-      ],
+      noExternal: ["react-router-dom", "react-router", "react-helmet-async"],
     },
     appType: "custom",
     logLevel: "warn",

@@ -47,6 +47,11 @@ const Products = () => {
 
   return (
     <>
+      <SEO
+        title="Security Products & Equipment | Triple A Tech Solutions"
+        description="Browse CCTV cameras, access control, alarms and security equipment from Triple A Tech Solutions. Quality products for homes and businesses in Kenya."
+        path="/products"
+      />
       <Navbar />
       <main className="pt-24 pb-20 min-h-screen">
         <div className="container px-4">

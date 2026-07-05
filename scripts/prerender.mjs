@@ -5,6 +5,26 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createServer, loadEnv } from "vite";
 
+// Minimal browser-global shims so client-side modules (e.g. the Supabase client,
+// which reads `localStorage` at import) don't throw during Node-side SSR.
+const memoryStorage = (() => {
+  const store = new Map();
+  return {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: (k) => store.delete(k),
+    clear: () => store.clear(),
+    key: (i) => Array.from(store.keys())[i] ?? null,
+    get length() {
+      return store.size;
+    },
+  };
+})();
+if (typeof globalThis.localStorage === "undefined")
+  globalThis.localStorage = memoryStorage;
+if (typeof globalThis.sessionStorage === "undefined")
+  globalThis.sessionStorage = memoryStorage;
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
 const DIST = path.join(ROOT, "dist");

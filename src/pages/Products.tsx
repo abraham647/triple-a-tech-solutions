@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Package } from "lucide-react";
 import { ProductCard } from "@/components/ProductsSection";
 import ProductInquiryDialog from "@/components/ProductInquiryDialog";
+import SEO from "@/components/SEO";
 
 const Products = () => {
   const [products, setProducts] = useState<any[]>([]);

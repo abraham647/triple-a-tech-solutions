@@ -65,16 +65,22 @@ async function main() {
     mode: "production",
     define,
     resolve: {
-      alias: {
-        "react-router-dom": path.join(
-          ROOT,
-          "node_modules/react-router-dom/dist/index.mjs"
-        ),
-        "react-router": path.join(
-          ROOT,
-          "node_modules/react-router/dist/development/index.mjs"
-        ),
-      },
+      alias: [
+        {
+          find: /^react-router-dom$/,
+          replacement: path.join(
+            ROOT,
+            "node_modules/react-router-dom/dist/index.mjs"
+          ),
+        },
+        {
+          find: /^react-router$/,
+          replacement: path.join(
+            ROOT,
+            "node_modules/react-router/dist/development/index.mjs"
+          ),
+        },
+      ],
     },
     server: { middlewareMode: true, hmr: false, watch: null },
     optimizeDeps: { noDiscovery: true },

@@ -16,7 +16,14 @@ const dom = new JSDOM("<!doctype html><html><body></body></html>", {
 const g = globalThis;
 g.window = dom.window;
 g.document = dom.window.document;
-g.navigator = dom.window.navigator;
+try {
+  Object.defineProperty(g, "navigator", {
+    value: dom.window.navigator,
+    configurable: true,
+  });
+} catch {
+  /* navigator is read-only in some Node versions; the built-in one is fine */
+}
 g.localStorage = dom.window.localStorage;
 g.sessionStorage = dom.window.sessionStorage;
 g.location = dom.window.location;

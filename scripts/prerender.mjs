@@ -4,26 +4,35 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createServer, loadEnv } from "vite";
+import { JSDOM } from "jsdom";
 
-// Minimal browser-global shims so client-side modules (e.g. the Supabase client,
-// which reads `localStorage` at import) don't throw during Node-side SSR.
-const memoryStorage = (() => {
-  const store = new Map();
-  return {
-    getItem: (k) => (store.has(k) ? store.get(k) : null),
-    setItem: (k, v) => store.set(k, String(v)),
-    removeItem: (k) => store.delete(k),
-    clear: () => store.clear(),
-    key: (i) => Array.from(store.keys())[i] ?? null,
-    get length() {
-      return store.size;
-    },
-  };
-})();
-if (typeof globalThis.localStorage === "undefined")
-  globalThis.localStorage = memoryStorage;
-if (typeof globalThis.sessionStorage === "undefined")
-  globalThis.sessionStorage = memoryStorage;
+// Set up browser globals via jsdom so client-side modules (Supabase client,
+// components that touch window/document/localStorage at import or render) work
+// during Node-side SSR.
+const dom = new JSDOM("<!doctype html><html><body></body></html>", {
+  url: "https://triple-a-tech-solutions.lovable.app/",
+  pretendToBeVisual: true,
+});
+const g = globalThis;
+g.window = dom.window;
+g.document = dom.window.document;
+g.navigator = dom.window.navigator;
+g.localStorage = dom.window.localStorage;
+g.sessionStorage = dom.window.sessionStorage;
+g.location = dom.window.location;
+g.HTMLElement = dom.window.HTMLElement;
+g.customElements = dom.window.customElements;
+if (typeof g.window.matchMedia !== "function") {
+  g.window.matchMedia = () => ({
+    matches: false,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}
+g.matchMedia = g.window.matchMedia;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");

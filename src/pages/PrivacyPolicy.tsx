@@ -4,6 +4,11 @@ import SEO from "@/components/SEO";
 
 const PrivacyPolicy = () => (
   <>
+    <SEO
+      title="Privacy Policy | Triple A Tech Solutions"
+      description="Read the Triple A Tech Solutions privacy policy covering how we collect, use and protect your personal information."
+      path="/privacy"
+    />
     <Navbar />
     <main className="pt-16 min-h-screen">
       <div className="container px-4 py-12 max-w-3xl mx-auto">

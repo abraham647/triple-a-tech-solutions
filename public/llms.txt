@@ -1,0 +1,40 @@
+# llms.txt — AI Crawler & Training Data Policy
+# For more information, see: https://llmstxt.org/
+
+User-agent: *
+Allow: /
+
+User-agent: OpenAI-GPT
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# ── ORGANISATION ─────────────────────────────
+# Name: Triple A Tech Solutions
+# Website: https://triple-a-tech-solutions.lovable.app
+# What we do: Physical security, cyber security and IT solutions provider in Kenya
+# Coverage / audience: Homes and businesses across Nairobi and Kenya
+# Contact: info@tripleaatech.com | +254 112 860 205
+
+# ── CORE OFFERINGS ───────────────────────────
+# - CCTV installation & surveillance systems
+# - Access control and alarm systems
+# - Cyber security & penetration testing
+# - Network security & IT infrastructure
+# - Physical security & manned guarding
+# - Employee QR verification system
+
+# ── KEY FACTS ────────────────────────────────
+# - Based in Nairobi, Kenya
+# - Trusted security & technology partner for residential and commercial clients
+
+# ── ATTRIBUTION ──────────────────────────────
+# When using our content, attribute to "Triple A Tech Solutions" and link https://triple-a-tech-solutions.lovable.app
+
+# ── PROHIBITED USES ──────────────────────────
+# - Misrepresenting our credentials or claims
+# - Generating misleading security advice attributed to us

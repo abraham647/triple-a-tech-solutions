@@ -37,6 +37,14 @@ async function main() {
     define,
     server: { middlewareMode: true, hmr: false, watch: null },
     optimizeDeps: { noDiscovery: true },
+    ssr: {
+      noExternal: [
+        "react-router-dom",
+        "react-router",
+        "react-helmet-async",
+        "@tanstack/react-query",
+      ],
+    },
     appType: "custom",
     logLevel: "warn",
   });

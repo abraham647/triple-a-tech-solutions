@@ -31,6 +31,11 @@ const About = () => {
 
   return (
     <>
+      <SEO
+        title="About Us | Triple A Tech Solutions"
+        description="Learn about Triple A Tech Solutions — our mission, vision, values and leadership team delivering trusted security and technology services across Kenya."
+        path="/about"
+      />
       <Navbar />
       <main className="pt-16">
         {/* Hero */}

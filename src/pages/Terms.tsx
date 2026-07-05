@@ -4,6 +4,11 @@ import SEO from "@/components/SEO";
 
 const Terms = () => (
   <>
+    <SEO
+      title="Terms of Service | Triple A Tech Solutions"
+      description="Review the terms of service governing use of the Triple A Tech Solutions website and security & technology services."
+      path="/terms"
+    />
     <Navbar />
     <main className="pt-16 min-h-screen">
       <div className="container px-4 py-12 max-w-3xl mx-auto">

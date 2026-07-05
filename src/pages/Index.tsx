@@ -8,9 +8,25 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEO from "@/components/SEO";
 
 const Index = () => (
   <>
+    <SEO
+      title="Triple A Tech Solutions | Kenya's Trusted Security & Tech Partner"
+      description="Leading physical security, cyber security & IT solutions provider in Kenya. CCTV, access control, penetration testing, network security & more."
+      path="/"
+      structuredData={{
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: "Triple A Tech Solutions",
+        description: "Comprehensive physical security, cyber security & tech solutions in Kenya",
+        url: "https://triple-a-tech-solutions.lovable.app",
+        telephone: "+254112860205",
+        email: "info@tripleaatech.com",
+        address: { "@type": "PostalAddress", addressLocality: "Nairobi", addressCountry: "KE" },
+      }}
+    />
     <Navbar />
     <main className="pt-16">
       <HeroSection />

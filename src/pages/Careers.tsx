@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Briefcase, MapPin, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 const openings = [
   { title: "Security Guard", location: "Nairobi, Kenya", type: "Full-time", description: "Join our professional security team to provide top-tier protection for our clients' premises." },
@@ -10,8 +11,36 @@ const openings = [
   { title: "Sales Representative", location: "Nairobi, Kenya", type: "Full-time", description: "Drive business growth by connecting potential clients with our security and technology solutions." },
 ];
 
+const jobPostingsLd = openings.map((o) => ({
+  "@context": "https://schema.org",
+  "@type": "JobPosting",
+  title: o.title,
+  description: o.description,
+  datePosted: "2026-01-01",
+  employmentType: "FULL_TIME",
+  hiringOrganization: {
+    "@type": "Organization",
+    name: "Triple A Tech Solutions",
+    sameAs: "https://triple-a-tech-solutions.lovable.app",
+  },
+  jobLocation: {
+    "@type": "Place",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Nairobi",
+      addressCountry: "KE",
+    },
+  },
+}));
+
 const Careers = () => (
   <>
+    <SEO
+      title="Careers | Triple A Tech Solutions"
+      description="Join Triple A Tech Solutions. Explore open roles in security, CCTV, cyber security and sales. Build your career with Kenya's trusted security partner."
+      path="/careers"
+      structuredData={jobPostingsLd}
+    />
     <Navbar />
     <main className="pt-16 min-h-screen">
       <div className="container px-4 py-12 max-w-4xl mx-auto">

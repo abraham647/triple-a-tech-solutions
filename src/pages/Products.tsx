@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Package } from "lucide-react";
 import { ProductCard } from "@/components/ProductsSection";
 import ProductInquiryDialog from "@/components/ProductInquiryDialog";
+import SEO from "@/components/SEO";
 
 const Products = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -46,6 +47,11 @@ const Products = () => {
 
   return (
     <>
+      <SEO
+        title="Security Products & Equipment | Triple A Tech Solutions"
+        description="Browse CCTV cameras, access control, alarms and security equipment from Triple A Tech Solutions. Quality products for homes and businesses in Kenya."
+        path="/products"
+      />
       <Navbar />
       <main className="pt-24 pb-20 min-h-screen">
         <div className="container px-4">

@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { Shield, Target, Eye, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import founderImg from "@/assets/founder.jpg";
+import SEO from "@/components/SEO";
 
 const About = () => {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -31,6 +32,11 @@ const About = () => {
 
   return (
     <>
+      <SEO
+        title="About Us | Triple A Tech Solutions"
+        description="Learn about Triple A Tech Solutions — our mission, vision, values and leadership team delivering trusted security and technology services across Kenya."
+        path="/about"
+      />
       <Navbar />
       <main className="pt-16">
         {/* Hero */}

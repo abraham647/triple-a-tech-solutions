@@ -12,3 +12,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /employee
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /verify
+
+Sitemap: https://triple-a-tech-solutions.lovable.app/sitemap.xml

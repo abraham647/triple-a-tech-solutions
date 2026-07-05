@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Briefcase, MapPin, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 const openings = [
   { title: "Security Guard", location: "Nairobi, Kenya", type: "Full-time", description: "Join our professional security team to provide top-tier protection for our clients' premises." },

@@ -520,6 +520,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      verify_employee_qr: {
+        Args: { _qr_code: string }
+        Returns: {
+          hired_at: string
+          id: string
+          is_active: boolean
+          name: string
+          photo_url: string
+          role: string
+        }[]
+      }
     }
     Enums: {
       app_role:

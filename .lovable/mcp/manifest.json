@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "triple-a-tech-mcp",
+      "version": "0.1.0",
+      "title": "Triple A Tech Solutions MCP"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List products",
+        "description": "List active security products from Triple A Tech Solutions, optionally filtered by category or search term.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "category": {
+              "description": "Filter by product category.",
+              "type": "string"
+            },
+            "search": {
+              "description": "Search term matched against product name.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max products to return (default 20).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_testimonials",
+        "title": "List testimonials",
+        "description": "List approved customer testimonials for Triple A Tech Solutions.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "Max testimonials to return (default 20).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "submit_product_inquiry",
+        "title": "Submit product inquiry",
+        "description": "Submit a product inquiry / quote request to Triple A Tech Solutions. Optionally reference a product by id.",
+        "annotations": {
+          "readOnlyHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "customer_name": {
+              "type": "string",
+              "description": "Full name of the person inquiring."
+            },
+            "customer_email": {
+              "type": "string",
+              "description": "Contact email address."
+            },
+            "customer_phone": {
+              "type": "string",
+              "description": "Contact phone number."
+            },
+            "message": {
+              "type": "string",
+              "description": "What the customer is interested in."
+            },
+            "product_id": {
+              "description": "Optional product id from list_products.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "customer_name",
+            "customer_email",
+            "customer_phone",
+            "message"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

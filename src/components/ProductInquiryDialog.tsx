@@ -33,7 +33,7 @@ const ProductInquiryDialog = ({ product, open, onClose }: Props) => {
     const result = schema.safeParse({ ...form, message });
     if (!result.success) {
       const fe: Record<string, string> = {};
-      result.error.errors.forEach(e => { if (e.path[0]) fe[e.path[0] as string] = e.message; });
+      result.error.issues.forEach(e => { if (e.path[0]) fe[e.path[0] as string] = e.message; });
       setErrors(fe);
       return;
     }

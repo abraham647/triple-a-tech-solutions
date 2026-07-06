@@ -68,8 +68,6 @@ const EmployeeVerify = () => {
 
             <h3 className="font-display font-bold text-xl">{employee.name}</h3>
             <p className="text-primary font-medium">{employee.role}</p>
-            {employee.phone && <p className="text-muted-foreground text-sm mt-2">📞 {employee.phone}</p>}
-            {employee.email && <p className="text-muted-foreground text-sm">✉️ {employee.email}</p>}
             <p className="text-xs text-muted-foreground mt-3">
               Employed since {new Date(employee.hired_at).toLocaleDateString()}
             </p>

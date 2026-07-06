@@ -14,7 +14,7 @@ const EmployeeVerify = () => {
       if (!qrCode) { setError("Invalid QR code"); setLoading(false); return; }
       const { data, error: err } = await supabase
         .from("employees")
-        .select("*")
+        .select("id, name, role, photo_url, hired_at, is_active, qr_code")
         .eq("qr_code", qrCode)
         .maybeSingle();
 

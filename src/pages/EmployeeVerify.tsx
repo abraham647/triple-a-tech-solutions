@@ -13,9 +13,7 @@ const EmployeeVerify = () => {
     const verify = async () => {
       if (!qrCode) { setError("Invalid QR code"); setLoading(false); return; }
       const { data, error: err } = await supabase
-        .from("employees")
-        .select("id, name, role, photo_url, hired_at, is_active, qr_code")
-        .eq("qr_code", qrCode)
+        .rpc("verify_employee_qr", { _qr_code: qrCode })
         .maybeSingle();
 
       if (err || !data) {

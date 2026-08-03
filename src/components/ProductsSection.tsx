@@ -56,10 +56,16 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
         <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-1">{product.description}</p>
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="font-display font-bold text-primary">{formatPrice(Number(product.price))}</span>
-          <Button size="sm" onClick={() => onInquire(product)} className="rounded-xl">
+          <Button size="sm" variant="outline" onClick={() => onInquire(product)} className="rounded-xl">
             <MessageSquare className="w-4 h-4 mr-1" /> Inquire
           </Button>
         </div>
+        {Number(product.price) > 0 && product.stock_status !== "out_of_stock" && (
+          <Button size="sm" onClick={() => setBuyOpen(true)} className="w-full rounded-xl glow-primary mb-2 h-9">
+            <ShoppingCart className="w-4 h-4 mr-1.5" /> Buy Now
+          </Button>
+        )}
+
         <a
           href={`https://wa.me/254732695197?text=${encodeURIComponent(`Hi Triple A Tech, I'm interested in: ${product.name}`)}`}
           target="_blank"

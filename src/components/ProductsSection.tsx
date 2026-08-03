@@ -107,7 +107,10 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
           </div>
         </DialogContent>
       </Dialog>
+
+      <BuyDialog product={product} open={buyOpen} onClose={() => setBuyOpen(false)} />
     </div>
+
   );
 };
 

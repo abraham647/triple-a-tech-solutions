@@ -172,6 +172,74 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          amount: number
+          checkout_request_id: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          delivery_notes: string
+          id: string
+          merchant_request_id: string | null
+          mpesa_receipt: string | null
+          payment_method: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          result_desc: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name: string
+          customer_phone: string
+          delivery_notes?: string
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          payment_method?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          result_desc?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          delivery_notes?: string
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          payment_method?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          result_desc?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_works: {
         Row: {
           created_at: string

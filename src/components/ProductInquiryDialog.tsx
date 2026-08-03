@@ -48,8 +48,17 @@ const ProductInquiryDialog = ({ product, open, onClose }: Props) => {
         message: message.trim(),
       });
       if (error) throw error;
+      supabase.functions.invoke("notify-admin", {
+        body: {
+          type: "inquiry",
+          name: form.customer_name.trim(),
+          phone: form.customer_phone.trim(),
+          subject: product?.name ? `Product: ${product.name}` : "General inquiry",
+        },
+      }).catch(() => {});
       toast({ title: "Inquiry sent!", description: "We'll get back to you shortly." });
       setForm({ customer_name: "", customer_email: "", customer_phone: "", message: "" });
+
       onClose();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

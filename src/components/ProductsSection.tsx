@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ProductInquiryDialog from "./ProductInquiryDialog";
+import BuyDialog from "./BuyDialog";
+
 
 export const formatPrice = (price: number) =>
   price && price > 0
@@ -27,7 +29,9 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
   const stock = stockLabel[product.stock_status] || stockLabel.in_stock;
   const gallery = getGallery(product);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
   const [active, setActive] = useState(0);
+
 
   const openGallery = (i = 0) => { if (gallery.length === 0) return; setActive(i); setGalleryOpen(true); };
   const prev = () => setActive(a => (a - 1 + gallery.length) % gallery.length);
@@ -54,10 +58,16 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
         <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-1">{product.description}</p>
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="font-display font-bold text-primary">{formatPrice(Number(product.price))}</span>
-          <Button size="sm" onClick={() => onInquire(product)} className="rounded-xl">
+          <Button size="sm" variant="outline" onClick={() => onInquire(product)} className="rounded-xl">
             <MessageSquare className="w-4 h-4 mr-1" /> Inquire
           </Button>
         </div>
+        {Number(product.price) > 0 && product.stock_status !== "out_of_stock" && (
+          <Button size="sm" onClick={() => setBuyOpen(true)} className="w-full rounded-xl glow-primary mb-2 h-9">
+            <ShoppingCart className="w-4 h-4 mr-1.5" /> Buy Now
+          </Button>
+        )}
+
         <a
           href={`https://wa.me/254732695197?text=${encodeURIComponent(`Hi Triple A Tech, I'm interested in: ${product.name}`)}`}
           target="_blank"
@@ -97,7 +107,10 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
           </div>
         </DialogContent>
       </Dialog>
+
+      <BuyDialog product={product} open={buyOpen} onClose={() => setBuyOpen(false)} />
     </div>
+
   );
 };
 

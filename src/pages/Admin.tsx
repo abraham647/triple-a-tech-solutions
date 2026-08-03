@@ -29,7 +29,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries" | "about";
+type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries" | "orders" | "about";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -97,11 +97,14 @@ const Admin = () => {
     fetchAll();
   }, [isAdmin]);
 
+  const [orders, setOrders] = useState<any[]>([]);
+
   const fetchAll = () => {
     fetchServices(); fetchWhyUs(); fetchPortfolio();
     fetchTestimonials(); fetchMessages(); fetchEmployees(); fetchUsers(); fetchTeam();
-    fetchProducts(); fetchInquiries(); fetchAboutSections();
+    fetchProducts(); fetchInquiries(); fetchAboutSections(); fetchOrders();
   };
+
 
   const fetchServices = async () => { const { data } = await supabase.from("services").select("*").order("display_order"); if (data) setServices(data); };
   const fetchWhyUs = async () => { const { data } = await supabase.from("why_us_cards").select("*").order("display_order"); if (data) setWhyUsCards(data); };
@@ -113,6 +116,14 @@ const Admin = () => {
   const fetchTeam = async () => { const { data } = await supabase.from("team_members").select("*").order("display_order"); if (data) setTeamMembers(data); };
   const fetchProducts = async () => { const { data } = await supabase.from("products").select("*").order("display_order"); if (data) setProducts(data); };
   const fetchInquiries = async () => { const { data } = await supabase.from("product_inquiries").select("*").order("created_at", { ascending: false }); if (data) setInquiries(data); };
+  const fetchOrders = async () => { const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false }); if (data) setOrders(data); };
+  const updateOrderStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  };
+  const deleteOrder = async (id: string) => { await supabase.from("orders").delete().eq("id", id); setOrders(prev => prev.filter(o => o.id !== id)); };
+
   const fetchAboutSections = async () => { const { data } = await supabase.from("about_sections").select("*").order("display_order"); if (data) setAboutSections(data); };
 
   const saveAboutSection = async (item: any) => {
@@ -343,6 +354,8 @@ const Admin = () => {
     { key: "portfolio", label: "Portfolio", icon: Image },
     { key: "products", label: "Products", icon: Package },
     { key: "inquiries", label: "Inquiries", icon: ShoppingCart, badge: newInquiries },
+    { key: "orders", label: "Orders", icon: Package, badge: orders.filter(o => o.status === "paid").length },
+
     { key: "team", label: "Team", icon: Users },
     { key: "about", label: "About Us", icon: FileText },
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
@@ -676,6 +689,54 @@ const Admin = () => {
             </div>
           </div>
         )}
+
+        {/* ORDERS TAB */}
+        {tab === "orders" && (
+          <div>
+            <h2 className="font-display font-bold text-lg mb-4">
+              Orders ({orders.length})
+              <span className="text-accent text-sm font-normal"> · {orders.filter(o => o.status === "paid").length} paid</span>
+            </h2>
+            <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
+              {orders.map(o => (
+                <div key={o.id} className={`p-4 rounded-xl border ${o.status === "paid" ? "border-accent/40 bg-accent/5" : o.status === "failed" ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <p className="font-semibold text-sm">{o.customer_name}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          o.status === "paid" ? "bg-accent/20 text-accent" :
+                          o.status === "pending" ? "bg-yellow-500/20 text-yellow-600" :
+                          o.status === "failed" ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"
+                        }`}>{o.status}</span>
+                        <span className="text-xs font-display font-bold text-primary">KES {Number(o.amount).toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">📞 {o.customer_phone}{o.customer_email ? ` · ${o.customer_email}` : ""}</p>
+                      <p className="text-xs text-primary mt-1">{o.product_name || "Order"} × {o.quantity}</p>
+                      {o.delivery_notes && <p className="text-sm text-muted-foreground mt-1">{o.delivery_notes}</p>}
+                      {o.mpesa_receipt && <p className="text-xs text-accent mt-1">M-Pesa code: {o.mpesa_receipt}</p>}
+                      {o.status === "failed" && o.result_desc && <p className="text-xs text-destructive mt-1">{o.result_desc}</p>}
+                      <p className="text-xs text-muted-foreground mt-2">{new Date(o.created_at).toLocaleString()}</p>
+                    </div>
+                    <div className="flex flex-col gap-1 shrink-0 items-end">
+                      <select value={o.status} onChange={e => updateOrderStatus(o.id, e.target.value)} className="h-8 rounded-lg border border-border bg-card px-2 text-xs">
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="fulfilled">Fulfilled</option>
+                        <option value="failed">Failed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteOrder(o.id)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {orders.length === 0 && <p className="text-muted-foreground text-sm">No orders yet.</p>}
+            </div>
+          </div>
+        )}
+
+
 
 
         {tab === "testimonials" && (

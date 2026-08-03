@@ -10,11 +10,14 @@ const stats = [
 ];
 
 const AnimatedCounter = ({ target, suffix }: { target: number; suffix: string }) => {
-  const [count, setCount] = useState(0);
+  // Start at the final value so prerendered/no-JS HTML shows real numbers, not "0+".
+  const [count, setCount] = useState(target);
   const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
 
   useEffect(() => {
+    setCount(0);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !started.current) {

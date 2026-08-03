@@ -61,8 +61,12 @@ const ContactSection = () => {
         message: form.message.trim(),
       });
       if (error) throw error;
+      supabase.functions.invoke("notify-admin", {
+        body: { type: "quote", name: form.name.trim(), phone: form.phone.trim(), subject: "Quote request from website" },
+      }).catch(() => {});
       toast({ title: "Quote request sent!", description: "We'll get back to you within 24 hours." });
       setForm({ name: "", email: "", phone: "", message: "" });
+
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {

@@ -29,7 +29,9 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
   const stock = stockLabel[product.stock_status] || stockLabel.in_stock;
   const gallery = getGallery(product);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [buyOpen, setBuyOpen] = useState(false);
   const [active, setActive] = useState(0);
+
 
   const openGallery = (i = 0) => { if (gallery.length === 0) return; setActive(i); setGalleryOpen(true); };
   const prev = () => setActive(a => (a - 1 + gallery.length) % gallery.length);

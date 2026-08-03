@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight } from "lucide-react";
+import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ProductInquiryDialog from "./ProductInquiryDialog";
+import BuyDialog from "./BuyDialog";
+
 
 export const formatPrice = (price: number) =>
   price && price > 0

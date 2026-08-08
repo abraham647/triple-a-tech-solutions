@@ -16,7 +16,20 @@ import Terms from "./pages/Terms";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Tuned for read-heavy public traffic: keep fetched data in memory, avoid
+// refetch storms on tab focus/reconnect, and retry once on transient failures.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

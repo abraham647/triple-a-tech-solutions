@@ -563,6 +563,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       update_my_employee_profile: {
         Args: { p_name: string; p_phone: string; p_photo_url: string }
         Returns: {

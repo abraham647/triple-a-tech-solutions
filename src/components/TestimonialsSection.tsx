@@ -1,6 +1,5 @@
 import { Star, Quote } from "lucide-react";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useApprovedTestimonials } from "@/hooks/usePublicData";
 
 const fallbackTestimonials = [
   {
@@ -24,22 +23,11 @@ const fallbackTestimonials = [
 ];
 
 const TestimonialsSection = () => {
-  const [testimonials, setTestimonials] = useState(fallbackTestimonials);
-
-  useEffect(() => {
-    const fetchApproved = async () => {
-      const { data } = await supabase
-        .from("testimonials")
-        .select("name, role, content, rating")
-        .eq("approved", true)
-        .order("created_at", { ascending: false })
-        .limit(6);
-      if (data && data.length > 0) {
-        setTestimonials(data.map(d => ({ name: d.name, role: d.role || "", text: d.content, rating: d.rating || 5 })));
-      }
-    };
-    fetchApproved();
-  }, []);
+  const { data } = useApprovedTestimonials();
+  const testimonials =
+    data && data.length > 0
+      ? data.map(d => ({ name: d.name, role: d.role || "", text: d.content, rating: d.rating || 5 }))
+      : fallbackTestimonials;
 
   return (
     <section className="py-20 md:py-28">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -116,22 +116,10 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
 
 const ProductsSection = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<any[]>([]);
+  const { data } = useFeaturedProducts(6);
+  const products = data ?? [];
   const [inquiry, setInquiry] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order")
-        .limit(6);
-      if (data) setProducts(data);
-    };
-    load();
-  }, []);
 
   if (products.length === 0) return null;
 

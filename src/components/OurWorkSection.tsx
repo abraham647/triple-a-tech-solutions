@@ -18,16 +18,9 @@ const fallbackWorks = [
 ];
 
 const OurWorkSection = () => {
-  const [works, setWorks] = useState(fallbackWorks);
+  const { data } = usePortfolioWorks();
+  const works = data && data.length > 0 ? data : fallbackWorks;
   const [selected, setSelected] = useState<number | null>(null);
-
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from("portfolio_works").select("*").order("display_order");
-      if (data && data.length > 0) setWorks(data);
-    };
-    load();
-  }, []);
 
   return (
     <section id="our-work" className="py-20 md:py-28 relative">

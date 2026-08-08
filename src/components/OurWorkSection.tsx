@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { usePortfolioWorks } from "@/hooks/usePublicData";
 import { X, Video, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import workCctv from "@/assets/work-cctv.jpg";

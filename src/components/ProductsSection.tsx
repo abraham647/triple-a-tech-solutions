@@ -41,7 +41,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
     <div className="group rounded-xl border border-border bg-card overflow-hidden flex flex-col glow-card glow-card-hover transition-all duration-300 hover:border-primary/30">
       <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => openGallery(0)}>
         {gallery[0] ? (
-          <img src={gallery[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={gallery[0]} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <Package className="w-12 h-12 text-muted-foreground" />
         )}
@@ -99,7 +99,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {gallery.map((img, i) => (
                   <button key={i} onClick={() => setActive(i)} className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${i === active ? "border-primary" : "border-transparent"}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

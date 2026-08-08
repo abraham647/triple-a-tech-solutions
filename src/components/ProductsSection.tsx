@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useFeaturedProducts } from "@/hooks/usePublicData";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";

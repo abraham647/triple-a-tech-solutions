@@ -2,7 +2,6 @@ import { useAboutSections, useTeamMembers } from "@/hooks/usePublicData";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Shield, Target, Eye, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import founderImg from "@/assets/founder.jpg";
 import SEO from "@/components/SEO";
 

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useWhyUsCards } from "@/hooks/usePublicData";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Clock, Users, Award, Headphones, Shield, Star, CheckCircle,
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServices } from "@/hooks/usePublicData";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, FlaskConical, Bug,

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useServices } from "@/hooks/usePublicData";
 import {
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
   Cpu, ShieldAlert, Search, Siren, KeySquare, Skull, FlaskConical, Bug,
@@ -67,19 +67,15 @@ const ServiceCard = ({ icon, title, description, index }: { icon: string; title:
 };
 
 const ServicesSection = () => {
-  const [physical, setPhysical] = useState(fallbackPhysical);
-  const [cyber, setCyber] = useState(fallbackCyber);
-
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from("services").select("*").order("display_order");
-      if (data && data.length > 0) {
-        setPhysical(data.filter(s => s.category === "physical"));
-        setCyber(data.filter(s => s.category === "cyber"));
-      }
-    };
-    load();
-  }, []);
+  const { data } = useServices();
+  const physical = useMemo(
+    () => (data && data.length > 0 ? data.filter(s => s.category === "physical") : fallbackPhysical),
+    [data]
+  );
+  const cyber = useMemo(
+    () => (data && data.length > 0 ? data.filter(s => s.category === "cyber") : fallbackCyber),
+    [data]
+  );
 
   return (
     <section id="services" className="py-20 md:py-28">

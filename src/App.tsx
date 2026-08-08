@@ -2,21 +2,35 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Products from "./pages/Products";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import Admin from "./pages/Admin";
+const Admin = lazy(() => import("./pages/Admin"));
 import EmployeeVerify from "./pages/EmployeeVerify";
-import Employee from "./pages/Employee";
+const Employee = lazy(() => import("./pages/Employee"));
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Tuned for read-heavy public traffic: keep fetched data in memory, avoid
+// refetch storms on tab focus/reconnect, and retry once on transient failures.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+    },
+  },
+});
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,6 +38,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
@@ -38,6 +53,7 @@ const App = () => (
           <Route path="/careers" element={<Careers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

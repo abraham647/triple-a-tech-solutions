@@ -1,24 +1,15 @@
-import { useEffect, useState } from "react";
+import { useAboutSections, useTeamMembers } from "@/hooks/usePublicData";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Shield, Target, Eye, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import founderImg from "@/assets/founder.jpg";
 import SEO from "@/components/SEO";
 
 const About = () => {
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
-  const [sections, setSections] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.from("team_members").select("*").eq("is_visible", true).order("display_order");
-      if (data) setTeamMembers(data);
-      const { data: secs } = await supabase.from("about_sections").select("*").eq("is_visible", true).order("display_order");
-      if (secs) setSections(secs);
-    };
-    fetch();
-  }, []);
+  const { data: teamData } = useTeamMembers();
+  const { data: sectionData } = useAboutSections();
+  const teamMembers = teamData ?? [];
+  const sections = sectionData ?? [];
 
   const mission = sections.find(s => s.section_type === "mission");
   const vision = sections.find(s => s.section_type === "vision");

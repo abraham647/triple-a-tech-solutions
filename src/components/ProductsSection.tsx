@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useFeaturedProducts } from "@/hooks/usePublicData";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -41,7 +41,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
     <div className="group rounded-xl border border-border bg-card overflow-hidden flex flex-col glow-card glow-card-hover transition-all duration-300 hover:border-primary/30">
       <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => openGallery(0)}>
         {gallery[0] ? (
-          <img src={gallery[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <img src={gallery[0]} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <Package className="w-12 h-12 text-muted-foreground" />
         )}
@@ -99,7 +99,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {gallery.map((img, i) => (
                   <button key={i} onClick={() => setActive(i)} className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${i === active ? "border-primary" : "border-transparent"}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -116,22 +116,10 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
 
 const ProductsSection = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<any[]>([]);
+  const { data } = useFeaturedProducts(6);
+  const products = data ?? [];
   const [inquiry, setInquiry] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .order("display_order")
-        .limit(6);
-      if (data) setProducts(data);
-    };
-    load();
-  }, []);
 
   if (products.length === 0) return null;
 

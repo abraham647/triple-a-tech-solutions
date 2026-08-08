@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useWhyUsCards } from "@/hooks/usePublicData";
 import {
   Clock, Users, Award, Headphones, Shield, Star, CheckCircle,
   Camera, Bell, KeyRound, ShieldCheck, Monitor, Globe, Network, Lock,
@@ -24,7 +24,8 @@ const fallbackReasons = [
 const WhyUsSection = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const [reasons, setReasons] = useState(fallbackReasons);
+  const { data } = useWhyUsCards();
+  const reasons = data && data.length > 0 ? data : fallbackReasons;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -33,14 +34,6 @@ const WhyUsSection = () => {
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.from("why_us_cards").select("*").order("display_order");
-      if (data && data.length > 0) setReasons(data);
-    };
-    load();
   }, []);
 
   return (

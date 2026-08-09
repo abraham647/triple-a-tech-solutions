@@ -16,6 +16,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+
 
 // Tuned for read-heavy public traffic: keep fetched data in memory, avoid
 // refetch storms on tab focus/reconnect, and retry once on transient failures.

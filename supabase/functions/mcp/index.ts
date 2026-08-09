@@ -6,16 +6,56 @@
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-products.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.108.2";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z } from "npm:zod@^4.4.3";
-function publicSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
+
+// src/lib/mcp/supabase.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.108.2";
+function runtimeEnv(name) {
+  const runtime = globalThis;
+  return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
 }
+function configuredEnv(names) {
+  for (const name of names) {
+    const value = runtimeEnv(name)?.trim();
+    if (value) return value;
+  }
+  return void 0;
+}
+function supabaseProjectUrl() {
+  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
+  if (!url) throw new Error("SUPABASE_URL (or VITE_SUPABASE_URL) is required");
+  return url;
+}
+function supabasePublishableKey() {
+  const direct = configuredEnv(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
+  if (direct) return direct;
+  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (keyset) {
+    try {
+      const parsed = JSON.parse(keyset);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const keys = parsed;
+        const key = [keys.default, ...Object.values(keys)].find((v) => typeof v === "string" && v.trim().startsWith("sb_publishable_"))?.trim();
+        if (key) return key;
+      }
+    } catch {
+    }
+  }
+  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  if (legacy) return legacy;
+  throw new Error("SUPABASE_PUBLISHABLE_KEY, SUPABASE_PUBLISHABLE_KEYS, or SUPABASE_ANON_KEY is required");
+}
+function supabaseForUser(ctx) {
+  const token = ctx.getToken();
+  if (!token) throw new Error("supabaseForUser requires a verified OAuth token");
+  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+
+// src/lib/mcp/tools/list-products.ts
 var list_products_default = defineTool({
   name: "list_products",
   title: "List products",
@@ -26,8 +66,11 @@ var list_products_default = defineTool({
     limit: z.number().int().optional().describe("Max products to return (default 20).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ category, search, limit }) => {
-    const supabase = publicSupabase();
+  handler: async ({ category, search, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
     let query = supabase.from("products").select("id, name, description, category, price, stock_status, image_url").eq("is_active", true).order("display_order", { ascending: true }).limit(Math.min(limit ?? 20, 100));
     if (category) query = query.eq("category", category);
     if (search) query = query.ilike("name", `%${search}%`);
@@ -41,16 +84,8 @@ var list_products_default = defineTool({
 });
 
 // src/lib/mcp/tools/list-testimonials.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.108.2";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z2 } from "npm:zod@^4.4.3";
-function publicSupabase2() {
-  return createClient2(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
 var list_testimonials_default = defineTool2({
   name: "list_testimonials",
   title: "List testimonials",
@@ -59,8 +94,11 @@ var list_testimonials_default = defineTool2({
     limit: z2.number().int().optional().describe("Max testimonials to return (default 20).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ limit }) => {
-    const supabase = publicSupabase2();
+  handler: async ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("testimonials").select("id, name, role, content, rating, created_at").eq("approved", true).order("created_at", { ascending: false }).limit(Math.min(limit ?? 20, 100));
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
@@ -71,42 +109,31 @@ var list_testimonials_default = defineTool2({
 });
 
 // src/lib/mcp/tools/submit-product-inquiry.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.108.2";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
 import { z as z3 } from "npm:zod@^4.4.3";
-function publicSupabase3() {
-  return createClient3(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
 var submit_product_inquiry_default = defineTool3({
   name: "submit_product_inquiry",
   title: "Submit product inquiry",
   description: "Submit a product inquiry / quote request to Triple A Tech Solutions. Optionally reference a product by id.",
   inputSchema: {
-    customer_name: z3.string().describe("Full name of the person inquiring."),
-    customer_email: z3.string().describe("Contact email address."),
-    customer_phone: z3.string().describe("Contact phone number."),
-    message: z3.string().describe("What the customer is interested in."),
-    product_id: z3.string().optional().describe("Optional product id from list_products.")
+    customer_name: z3.string().trim().min(1).max(120).describe("Full name of the person inquiring."),
+    customer_email: z3.string().trim().email().max(200).describe("Contact email address."),
+    customer_phone: z3.string().trim().min(7).max(30).describe("Contact phone number."),
+    message: z3.string().trim().min(1).max(2e3).describe("What the customer is interested in."),
+    product_id: z3.string().uuid().optional().describe("Optional product id from list_products.")
   },
   annotations: { readOnlyHint: false, openWorldHint: false },
-  handler: async ({ customer_name, customer_email, customer_phone, message, product_id }) => {
-    const name = customer_name.trim();
-    const email = customer_email.trim();
-    const phone = customer_phone.trim();
-    if (!name || !email || !phone || !message.trim()) {
-      return { content: [{ type: "text", text: "Name, email, phone and message are required." }], isError: true };
+  handler: async ({ customer_name, customer_email, customer_phone, message, product_id }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const supabase = publicSupabase3();
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("product_inquiries").insert({
       product_id: product_id ?? null,
-      customer_name: name,
-      customer_email: email,
-      customer_phone: phone,
-      message: message.trim()
+      customer_name,
+      customer_email,
+      customer_phone,
+      message
     }).select("id");
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {

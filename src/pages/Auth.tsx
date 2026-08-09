@@ -17,11 +17,25 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Only same-origin relative paths are honoured as a post-login redirect.
+  const rawNext = searchParams.get("next") ?? "";
+  const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "";
+
+  const goNext = (fallback: string) => {
+    if (nextPath) {
+      window.location.href = nextPath;
+      return;
+    }
+    navigate(fallback);
+  };
 
   const routeAfterLogin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate("/"); return; }
+    if (!user) { goNext("/"); return; }
+    if (nextPath) { goNext("/"); return; }
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
     if (roles?.some((r: any) => r.role === "admin")) { navigate("/admin"); return; }
     if (roles?.some((r: any) => r.role === "employee")) {
@@ -37,6 +51,7 @@ const Auth = () => {
     }
     navigate("/");
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

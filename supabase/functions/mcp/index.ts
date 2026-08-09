@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/list-products.ts
 import { createClient } from "npm:@supabase/supabase-js@^2.108.2";
@@ -117,11 +117,16 @@ var submit_product_inquiry_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
+var projectRef = "tltjgqzilkofuwyjhmjy";
 var mcp_default = defineMcp({
   name: "triple-a-tech-mcp",
   title: "Triple A Tech Solutions MCP",
   version: "0.1.0",
   instructions: "Tools for Triple A Tech Solutions, a Kenyan security & tech company. Use `list_products` to browse security products, `list_testimonials` for customer reviews, and `submit_product_inquiry` to send a quote request.",
+  auth: auth.oauth.issuer({
+    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    acceptedAudiences: "authenticated"
+  }),
   tools: [list_products_default, list_testimonials_default, submit_product_inquiry_default]
 });
 

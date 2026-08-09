@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,25 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Only same-origin relative paths are honoured as a post-login redirect.
+  const rawNext = searchParams.get("next") ?? "";
+  const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "";
+
+  const goNext = (fallback: string) => {
+    if (nextPath) {
+      window.location.href = nextPath;
+      return;
+    }
+    navigate(fallback);
+  };
 
   const routeAfterLogin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate("/"); return; }
+    if (!user) { goNext("/"); return; }
+    if (nextPath) { goNext("/"); return; }
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
     if (roles?.some((r: any) => r.role === "admin")) { navigate("/admin"); return; }
     if (roles?.some((r: any) => r.role === "employee")) {
@@ -36,6 +51,7 @@ const Auth = () => {
     }
     navigate("/");
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +74,7 @@ const Auth = () => {
           password,
           options: {
             data: { display_name: displayName },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}${nextPath || "/"}`,
           },
         });
         if (error) throw error;
@@ -66,7 +82,8 @@ const Auth = () => {
           title: "Account created!",
           description: "You are now logged in.",
         });
-        navigate("/");
+        goNext("/");
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -83,7 +100,7 @@ const Auth = () => {
     setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}${nextPath || "/"}`,
       });
       if (result.error) {
         toast({ title: "Error", description: String(result.error), variant: "destructive" });

@@ -12,17 +12,19 @@ const EmployeeVerify = () => {
   useEffect(() => {
     const verify = async () => {
       if (!qrCode) { setError("Invalid QR code"); setLoading(false); return; }
-      const { data, error: err } = await supabase
-        .rpc("verify_employee_qr", { _qr_code: qrCode })
-        .maybeSingle();
+      const { data, error: err } = await supabase.functions.invoke("verify-employee", {
+        body: { qr_code: qrCode },
+      });
+      const record = (data as any)?.employee;
 
-      if (err || !data) {
+      if (err || !record) {
         setError("Employee not found or card is invalid.");
-      } else if (!data.is_active) {
+      } else if (!record.is_active) {
         setError("This employee card has been deactivated.");
       } else {
-        setEmployee(data);
+        setEmployee(record);
       }
+
       setLoading(false);
     };
     verify();

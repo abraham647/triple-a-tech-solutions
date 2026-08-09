@@ -1,14 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-
-function publicSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
+import { supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "list_testimonials",
@@ -18,8 +10,11 @@ export default defineTool({
     limit: z.number().int().optional().describe("Max testimonials to return (default 20)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ limit }) => {
-    const supabase = publicSupabase();
+  handler: async ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase
       .from("testimonials")
       .select("id, name, role, content, rating, created_at")

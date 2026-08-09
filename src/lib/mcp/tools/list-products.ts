@@ -1,14 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-
-function publicSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
+import { supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "list_products",
@@ -21,8 +13,11 @@ export default defineTool({
     limit: z.number().int().optional().describe("Max products to return (default 20)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ category, search, limit }) => {
-    const supabase = publicSupabase();
+  handler: async ({ category, search, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
     let query = supabase
       .from("products")
       .select("id, name, description, category, price, stock_status, image_url")

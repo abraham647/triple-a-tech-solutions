@@ -74,7 +74,7 @@ const Auth = () => {
           password,
           options: {
             data: { display_name: displayName },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}${nextPath || "/"}`,
           },
         });
         if (error) throw error;
@@ -82,7 +82,8 @@ const Auth = () => {
           title: "Account created!",
           description: "You are now logged in.",
         });
-        navigate("/");
+        goNext("/");
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

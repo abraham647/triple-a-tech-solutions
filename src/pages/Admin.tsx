@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { openQuotationApp } from "@/lib/quotations";
 
 // Icon map for dynamic icon selection
 const iconMap: Record<string, React.ElementType> = {
@@ -693,10 +694,15 @@ const Admin = () => {
         {/* ORDERS TAB */}
         {tab === "orders" && (
           <div>
-            <h2 className="font-display font-bold text-lg mb-4">
-              Orders ({orders.length})
-              <span className="text-accent text-sm font-normal"> · {orders.filter(o => o.status === "paid").length} paid</span>
-            </h2>
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <h2 className="font-display font-bold text-lg">
+                Orders ({orders.length})
+                <span className="text-accent text-sm font-normal"> · {orders.filter(o => o.status === "paid").length} paid</span>
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => openQuotationApp()}>
+                Open Quotation Designer
+              </Button>
+            </div>
             <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
               {orders.map(o => (
                 <div key={o.id} className={`p-4 rounded-xl border ${o.status === "paid" ? "border-accent/40 bg-accent/5" : o.status === "failed" ? "border-destructive/30 bg-destructive/5" : "border-border bg-card"}`}>
@@ -726,6 +732,9 @@ const Admin = () => {
                         <option value="failed">Failed</option>
                         <option value="cancelled">Cancelled</option>
                       </select>
+                      <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => openQuotationApp(o)}>
+                        Make Quotation
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteOrder(o.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>

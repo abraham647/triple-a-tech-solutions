@@ -17,6 +17,7 @@ import Terms from "./pages/Terms";
 import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+import BackToAdminButton from "./components/BackToAdminButton";
 
 
 // Tuned for read-heavy public traffic: keep fetched data in memory, avoid
@@ -58,6 +59,7 @@ const App = () => (
 
         </Routes>
         </Suspense>
+        <BackToAdminButton />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

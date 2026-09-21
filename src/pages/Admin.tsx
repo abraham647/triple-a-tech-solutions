@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { openQuotationApp } from "@/lib/quotations";
 
 // Icon map for dynamic icon selection
 const iconMap: Record<string, React.ElementType> = {

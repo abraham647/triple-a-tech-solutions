@@ -140,23 +140,40 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
       amount: unitPrice,
     };
 
+    // Reads the real message the function returned, even on a non-2xx response.
+    const call = async (fn: string, body: any) => {
+      const { data, error } = await supabase.functions.invoke(fn, { body });
+      if (error) {
+        let detail = error.message;
+        const res = (error as any)?.context;
+        if (res && typeof res.text === "function") {
+          const raw = await res.text().catch(() => "");
+          try {
+            const parsed = JSON.parse(raw);
+            detail = parsed.error ?? parsed.message ?? raw ?? detail;
+          } catch {
+            if (raw) detail = raw;
+          }
+        }
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      const d = data as any;
+      if (d?.error) throw new Error(typeof d.error === "string" ? d.error : JSON.stringify(d.error));
+      return d;
+    };
+
     try {
       if (method === "mpesa") {
-        const { data, error } = await supabase.functions.invoke("mpesa-stkpush", { body: payload });
-        if (error) throw new Error((data as any)?.error ?? error.message);
-        if ((data as any)?.error) throw new Error((data as any).error);
+        const data = await call("mpesa-stkpush", payload);
         setStage("waiting");
-        startPolling((data as any).order_id);
+        startPolling(data.order_id);
       } else {
-        const { data, error } = await supabase.functions.invoke("create-order", {
-          body: { ...payload, payment_method: method },
-        });
-        if (error) throw new Error((data as any)?.error ?? error.message);
-        if ((data as any)?.error) throw new Error((data as any).error);
-        setReference((data as any).reference ?? null);
+        const data = await call("create-order", { ...payload, payment_method: method });
+        setReference(data.reference ?? null);
         setStage("submitted");
       }
     } catch (err: any) {
+      console.error("Checkout failed:", err);
       toast({ title: "Could not place the order", description: err.message, variant: "destructive" });
     } finally {
       setSubmitting(false);

@@ -1,8 +1,14 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
 import { normalizeKePhone } from "../_shared/phone.ts";
 import { sendAdminSms } from "../_shared/notify.ts";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+};
 
 const BodySchema = z.object({
   product_id: z.string().uuid().nullable().optional(),
@@ -22,36 +28,59 @@ function darajaBase() {
 }
 
 function timestamp() {
-  const d = new Date();
+  // Daraja expects EAT (UTC+3) timestamps
+  const d = new Date(Date.now() + 3 * 60 * 60 * 1000);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const json = (payload: unknown, status = 200) =>
+  // Always JSON, always CORS — never let the browser mask the message.
+  const json = (payload: Record<string, unknown>, status = 200) =>
     new Response(JSON.stringify(payload), {
       status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
 
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ ok: false, error: "Use POST" });
+
   try {
-    const parsed = BodySchema.safeParse(await req.json());
+    const raw = await req.json().catch(() => null);
+    if (!raw) return json({ ok: false, error: "Invalid request body" });
+
+    const parsed = BodySchema.safeParse(raw);
     if (!parsed.success) {
-      return json({ error: parsed.error.flatten().fieldErrors }, 400);
+      const fields = parsed.error.flatten().fieldErrors;
+      const first = Object.entries(fields).map(([k, v]) => `${k}: ${v?.[0]}`).join(", ");
+      return json({ ok: false, error: first || "Invalid details", fields });
     }
     const b = parsed.data;
 
+    // Accepts +254…, 254…, 07…, 01…, 7…, 1…
     const msisdn = normalizeKePhone(b.customer_phone);
-    if (!msisdn) return json({ error: "Enter a valid Safaricom number, e.g. 0712345678" }, 400);
+    if (!msisdn) {
+      return json({ ok: false, error: "Enter a valid Safaricom number, e.g. 0712345678" });
+    }
 
     const consumerKey = Deno.env.get("MPESA_CONSUMER_KEY");
     const consumerSecret = Deno.env.get("MPESA_CONSUMER_SECRET");
     const shortcode = Deno.env.get("MPESA_SHORTCODE");
     const passkey = Deno.env.get("MPESA_PASSKEY");
-    if (!consumerKey || !consumerSecret || !shortcode || !passkey) {
-      return json({ error: "M-Pesa is not configured yet. Please contact us to complete your order." }, 503);
+
+    const missing = [
+      ["MPESA_CONSUMER_KEY", consumerKey],
+      ["MPESA_CONSUMER_SECRET", consumerSecret],
+      ["MPESA_SHORTCODE", shortcode],
+      ["MPESA_PASSKEY", passkey],
+    ].filter(([, v]) => !v).map(([k]) => k as string);
+
+    if (missing.length) {
+      console.error("Missing M-Pesa configuration:", missing.join(", "));
+      return json({
+        ok: false,
+        error: `M-Pesa is not configured yet (missing: ${missing.join(", ")}). Please contact us to complete your order.`,
+      });
     }
 
     const supabase = createClient(
@@ -73,6 +102,7 @@ Deno.serve(async (req) => {
         delivery_notes: b.delivery_notes ?? "",
         quantity: b.quantity,
         amount: total,
+        payment_method: "mpesa",
         status: "pending",
       })
       .select("id")
@@ -80,20 +110,23 @@ Deno.serve(async (req) => {
 
     if (orderErr || !order) {
       console.error("Order insert failed:", orderErr);
-      return json({ error: "Could not create your order. Please try again." }, 500);
+      return json({ ok: false, error: `Could not create your order: ${orderErr?.message ?? "unknown error"}` });
     }
 
     // 1. OAuth token
     const tokenRes = await fetch(`${darajaBase()}/oauth/v1/generate?grant_type=client_credentials`, {
       headers: { Authorization: `Basic ${btoa(`${consumerKey}:${consumerSecret}`)}` },
     });
+    const tokenText = await tokenRes.text();
     if (!tokenRes.ok) {
-      const t = await tokenRes.text();
-      console.error(`Daraja auth failed [${tokenRes.status}]: ${t}`);
+      console.error(`Daraja auth failed [${tokenRes.status}]: ${tokenText}`);
       await supabase.from("orders").update({ status: "failed", result_desc: "Auth failed" }).eq("id", order.id);
-      return json({ error: "Payment service unavailable. Please try again shortly." }, 502);
+      return json({ ok: false, error: `M-Pesa authentication failed (${tokenRes.status}): ${tokenText.slice(0, 200)}` });
     }
-    const { access_token } = await tokenRes.json();
+    const access_token = JSON.parse(tokenText)?.access_token;
+    if (!access_token) {
+      return json({ ok: false, error: "M-Pesa did not return an access token. Check your consumer key and secret." });
+    }
 
     // 2. STK push
     const ts = timestamp();
@@ -118,14 +151,19 @@ Deno.serve(async (req) => {
       }),
     });
 
-    const pushBody = await pushRes.json().catch(() => ({}));
+    const pushText = await pushRes.text();
+    let pushBody: any = {};
+    try { pushBody = JSON.parse(pushText); } catch { /* keep raw */ }
+
     if (!pushRes.ok || pushBody?.ResponseCode !== "0") {
-      console.error(`STK push failed [${pushRes.status}]:`, JSON.stringify(pushBody));
-      await supabase
-        .from("orders")
-        .update({ status: "failed", result_desc: pushBody?.errorMessage ?? pushBody?.ResponseDescription ?? "STK push failed" })
-        .eq("id", order.id);
-      return json({ error: pushBody?.errorMessage ?? "Could not send the payment prompt. Check the number and try again." }, 400);
+      console.error(`STK push failed [${pushRes.status}]: ${pushText}`);
+      const reason =
+        pushBody?.errorMessage ??
+        pushBody?.ResponseDescription ??
+        pushText.slice(0, 200) ??
+        "STK push failed";
+      await supabase.from("orders").update({ status: "failed", result_desc: String(reason) }).eq("id", order.id);
+      return json({ ok: false, error: `M-Pesa: ${reason}`, daraja_status: pushRes.status });
     }
 
     await supabase
@@ -136,14 +174,18 @@ Deno.serve(async (req) => {
       })
       .eq("id", order.id);
 
-    // Alert the admin that an order attempt came in (fire and forget)
     sendAdminSms(
       `NEW ORDER (awaiting payment)\n${b.product_name || "Product"} x${b.quantity}\nKES ${total}\n${b.customer_name.trim()} - +${msisdn}`,
     ).catch(() => {});
 
-    return json({ order_id: order.id, checkout_request_id: pushBody.CheckoutRequestID, message: "Payment prompt sent to your phone." });
+    return json({
+      ok: true,
+      order_id: order.id,
+      checkout_request_id: pushBody.CheckoutRequestID,
+      message: "Payment prompt sent to your phone.",
+    });
   } catch (e) {
     console.error("mpesa-stkpush error:", e);
-    return json({ error: "Unexpected error. Please try again." }, 500);
+    return json({ ok: false, error: `Unexpected error: ${e instanceof Error ? e.message : String(e)}` });
   }
 });

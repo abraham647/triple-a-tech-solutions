@@ -197,9 +197,17 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
 
         {stage === "form" && (
           <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-secondary/30 p-3 text-sm flex items-center justify-between">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-display font-bold text-primary">{formatPrice(total)}</span>
+            <div className="rounded-xl border border-border bg-secondary/30 p-3 text-sm space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Total</span>
+                <span className="font-display font-bold text-primary">{formatPrice(total)}</span>
+              </div>
+              {isDeposit && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">50% deposit due now</span>
+                  <span className="font-semibold text-foreground">{formatPrice(deposit)}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -226,7 +234,7 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
             </div>
 
             <div className="space-y-2">
-              <Label>{method === "mpesa" ? "M-Pesa Phone Number" : "Phone Number"}</Label>
+              <Label>{method === "bank_transfer" ? "Phone Number" : "M-Pesa Phone Number"}</Label>
               <Input
                 value={form.customer_phone}
                 onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
@@ -234,9 +242,11 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
                 className="rounded-xl"
               />
               <p className="text-muted-foreground text-xs">
-                {method === "mpesa"
-                  ? "You'll get a payment prompt on this number."
-                  : "We'll call or WhatsApp you on this number to confirm."}
+                {method === "bank_transfer"
+                  ? "We'll call or WhatsApp you on this number to confirm."
+                  : isDeposit
+                    ? `You'll get an M-Pesa prompt for the 50% deposit (${formatPrice(deposit)}) on this number.`
+                    : "You'll get a payment prompt on this number."}
               </p>
               {errors.customer_phone && <p className="text-destructive text-xs">{errors.customer_phone}</p>}
             </div>
@@ -272,7 +282,9 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
 
             <Button onClick={submit} disabled={submitting} className="w-full glow-primary rounded-xl">
               {submitting ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {method === "mpesa" ? "Sending prompt..." : "Placing order..."}</>
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {method === "bank_transfer" ? "Placing order..." : "Sending prompt..."}</>
+              ) : isDeposit ? (
+                <><ShoppingCart className="w-4 h-4 mr-2" /> Pay 50% deposit — {formatPrice(deposit)}</>
               ) : method === "mpesa" ? (
                 <><ShoppingCart className="w-4 h-4 mr-2" /> Pay {formatPrice(total)} with M-Pesa</>
               ) : (
@@ -291,7 +303,9 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
             <Smartphone className="w-12 h-12 text-primary mx-auto animate-pulse" />
             <h3 className="font-display font-semibold text-lg">Check your phone</h3>
             <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-              Enter your M-Pesa PIN on the prompt sent to {form.customer_phone}. Keep this window open — we'll confirm here.
+              {isDeposit
+                ? `Enter your M-Pesa PIN to pay the 50% deposit of ${formatPrice(deposit)} on the prompt sent to ${form.customer_phone}.`
+                : `Enter your M-Pesa PIN on the prompt sent to ${form.customer_phone}.`} Keep this window open — we'll confirm here.
             </p>
             <Loader2 className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
           </div>
@@ -300,9 +314,11 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
         {stage === "paid" && (
           <div className="py-8 text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 text-accent mx-auto" />
-            <h3 className="font-display font-semibold text-lg">Payment successful</h3>
+            <h3 className="font-display font-semibold text-lg">{isDeposit ? "Deposit received" : "Payment successful"}</h3>
             <p className="text-muted-foreground text-sm">
-              {formatPrice(total)} received{receipt ? ` — M-Pesa code ${receipt}` : ""}. Our team has been notified and will contact you about delivery.
+              {isDeposit
+                ? `${formatPrice(deposit)} deposit received${receipt ? ` — M-Pesa code ${receipt}` : ""}. You'll pay the balance of ${formatPrice(total - deposit)} when your order arrives.`
+                : `${formatPrice(total)} received${receipt ? ` — M-Pesa code ${receipt}` : ""}. Our team has been notified and will contact you about delivery.`}
             </p>
             <Button onClick={onClose} className="rounded-xl">Done</Button>
           </div>

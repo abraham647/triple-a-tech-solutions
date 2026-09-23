@@ -44,7 +44,7 @@ interface Props {
 const METHODS: { value: Method; label: string; hint: string }[] = [
   { value: "mpesa", label: "M-Pesa (instant prompt)", hint: "We send a payment request to your phone — you just enter your M-Pesa PIN." },
   { value: "bank_transfer", label: "Bank transfer", hint: "We confirm your order and share our bank details, then release the goods once payment clears." },
-  { value: "cash_on_delivery", label: "Pay on delivery", hint: "Pay cash or M-Pesa to our rider when your order arrives (selected areas)." },
+  { value: "cash_on_delivery", label: "Pay on delivery", hint: "Pay a 50% deposit now via M-Pesa prompt, then the balance when your order arrives." },
 ];
 
 const BuyDialog = ({ product, open, onClose }: Props) => {
@@ -62,6 +62,8 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
 
   const unitPrice = Number(product?.price ?? 0);
   const total = unitPrice * quantity;
+  const isDeposit = method === "cash_on_delivery";
+  const deposit = Math.max(1, Math.ceil(total / 2));
   const activeMethod = METHODS.find(m => m.value === method)!;
 
   const stopPolling = () => {
@@ -112,7 +114,7 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
   };
 
   const submit = async () => {
-    const schema = method === "mpesa" ? mpesaSchema : manualSchema;
+    const schema = method === "bank_transfer" ? manualSchema : mpesaSchema;
     const result = schema.safeParse({ ...form, quantity });
     if (!result.success) {
       const fe: Record<string, string> = {};
@@ -163,8 +165,12 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
     };
 
     try {
-      if (method === "mpesa") {
-        const data = await call("mpesa-stkpush", payload);
+      if (method === "mpesa" || method === "cash_on_delivery") {
+        const data = await call("mpesa-stkpush", {
+          ...payload,
+          payment_method: method,
+          ...(isDeposit ? { charge_amount: deposit } : {}),
+        });
         setStage("waiting");
         startPolling(data.order_id);
       } else {

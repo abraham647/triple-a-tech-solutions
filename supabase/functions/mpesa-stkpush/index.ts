@@ -19,6 +19,9 @@ const BodySchema = z.object({
   delivery_notes: z.string().trim().max(1000).optional().default(""),
   quantity: z.number().int().min(1).max(100),
   amount: z.number().min(1).max(1000000),
+  // "cash_on_delivery" = 50% deposit charged now, balance on delivery
+  payment_method: z.enum(["mpesa", "cash_on_delivery"]).optional().default("mpesa"),
+  charge_amount: z.number().min(1).max(1000000).optional(),
 });
 
 function darajaBase() {
@@ -90,6 +93,10 @@ Deno.serve(async (req) => {
     );
 
     const total = Math.round(b.amount * b.quantity);
+    const isDeposit = b.payment_method === "cash_on_delivery";
+    const charge = isDeposit
+      ? Math.max(1, Math.ceil(total / 2))
+      : Math.round(b.charge_amount ?? total);
 
     const { data: order, error: orderErr } = await supabase
       .from("orders")
@@ -102,7 +109,7 @@ Deno.serve(async (req) => {
         delivery_notes: b.delivery_notes ?? "",
         quantity: b.quantity,
         amount: total,
-        payment_method: "mpesa",
+        payment_method: b.payment_method,
         status: "pending",
       })
       .select("id")
@@ -141,13 +148,13 @@ Deno.serve(async (req) => {
         Password: password,
         Timestamp: ts,
         TransactionType: "CustomerPayBillOnline",
-        Amount: total,
+        Amount: charge,
         PartyA: msisdn,
         PartyB: shortcode,
         PhoneNumber: msisdn,
         CallBackURL: callbackUrl,
         AccountReference: `TRIPLEA-${order.id.slice(0, 8)}`,
-        TransactionDesc: (b.product_name || "Order").slice(0, 60),
+        TransactionDesc: (isDeposit ? `Deposit ${b.product_name || "Order"}` : b.product_name || "Order").slice(0, 60),
       }),
     });
 
@@ -175,7 +182,9 @@ Deno.serve(async (req) => {
       .eq("id", order.id);
 
     sendAdminSms(
-      `NEW ORDER (awaiting payment)\n${b.product_name || "Product"} x${b.quantity}\nKES ${total}\n${b.customer_name.trim()} - +${msisdn}`,
+      isDeposit
+        ? `NEW ORDER - PAY ON DELIVERY (awaiting 50% deposit)\n${b.product_name || "Product"} x${b.quantity}\nTotal KES ${total} - deposit KES ${charge}\n${b.customer_name.trim()} - +${msisdn}`
+        : `NEW ORDER (awaiting payment)\n${b.product_name || "Product"} x${b.quantity}\nKES ${total}\n${b.customer_name.trim()} - +${msisdn}`,
     ).catch(() => {});
 
     return json({

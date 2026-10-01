@@ -261,6 +261,8 @@ const Admin = () => {
       price: Number(item.price) || 0, image_url: item.image_url,
       images: Array.isArray(item.images) ? item.images : [],
       stock_status: item.stock_status, display_order: item.display_order || 0,
+      barcode: item.barcode?.trim() || null,
+      stock_quantity: item.stock_quantity === "" || item.stock_quantity == null ? null : Number(item.stock_quantity),
       is_active: item.is_active ?? true,
     };
     if (item.id) {
@@ -629,7 +631,7 @@ const Admin = () => {
                       <p className="font-semibold text-sm truncate flex-1">{p.name}</p>
                       {!p.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
                     </div>
-                    <p className="text-xs text-muted-foreground">{p.category} · {p.stock_status} · Order: {p.display_order}</p>
+                    <p className="text-xs text-muted-foreground">{p.category} · {p.stock_status}{p.stock_quantity != null ? ` (${p.stock_quantity} left)` : ""} · Order: {p.display_order}</p>
                     <p className="text-sm font-semibold text-primary mt-1">KES {Number(p.price).toLocaleString()}</p>
                     <div className="flex gap-1 mt-3">
                       <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditDialog("products"); }}><Edit className="w-4 h-4" /></Button>
@@ -716,6 +718,7 @@ const Admin = () => {
                           o.status === "failed" ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"
                         }`}>{o.status}</span>
                         <span className="text-xs font-display font-bold text-primary">KES {Number(o.amount).toLocaleString()}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{o.source === "pos" ? "Shop till (POS)" : "Website"}</span>
                       </div>
                       <p className="text-xs text-muted-foreground">📞 {o.customer_phone}{o.customer_email ? ` · ${o.customer_email}` : ""}</p>
                       <p className="text-xs text-primary mt-1">{o.product_name || "Order"} × {o.quantity}</p>
@@ -1160,6 +1163,10 @@ const Admin = () => {
                     <option value="preorder">Pre-order</option>
                   </select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Barcode (for POS)</Label><Input value={editItem.barcode ?? ""} onChange={e => setEditItem({ ...editItem, barcode: e.target.value })} className="rounded-xl" /></div>
+                <div className="space-y-2"><Label>Stock quantity</Label><Input type="number" value={editItem.stock_quantity ?? ""} onChange={e => setEditItem({ ...editItem, stock_quantity: e.target.value })} className="rounded-xl" /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" value={editItem.price} onChange={e => setEditItem({ ...editItem, price: e.target.value })} className="rounded-xl" /></div>

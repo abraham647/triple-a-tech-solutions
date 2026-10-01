@@ -185,10 +185,12 @@ export type Database = {
           merchant_request_id: string | null
           mpesa_receipt: string | null
           payment_method: string
+          pos_sale_id: string | null
           product_id: string | null
           product_name: string
           quantity: number
           result_desc: string | null
+          source: string
           status: string
           updated_at: string
         }
@@ -204,10 +206,12 @@ export type Database = {
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
           payment_method?: string
+          pos_sale_id?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
           result_desc?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -223,10 +227,12 @@ export type Database = {
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
           payment_method?: string
+          pos_sale_id?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
           result_desc?: string | null
+          source?: string
           status?: string
           updated_at?: string
         }
@@ -325,6 +331,7 @@ export type Database = {
       }
       products: {
         Row: {
+          barcode: string | null
           category: string
           created_at: string
           description: string
@@ -335,10 +342,12 @@ export type Database = {
           is_active: boolean
           name: string
           price: number
+          stock_quantity: number | null
           stock_status: string
           updated_at: string
         }
         Insert: {
+          barcode?: string | null
           category?: string
           created_at?: string
           description?: string
@@ -349,10 +358,12 @@ export type Database = {
           is_active?: boolean
           name: string
           price?: number
+          stock_quantity?: number | null
           stock_status?: string
           updated_at?: string
         }
         Update: {
+          barcode?: string | null
           category?: string
           created_at?: string
           description?: string
@@ -363,6 +374,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           price?: number
+          stock_quantity?: number | null
           stock_status?: string
           updated_at?: string
         }

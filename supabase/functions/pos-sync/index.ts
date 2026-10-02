@@ -28,6 +28,22 @@ const SaleSchema = z.object({
   status: z.enum(["paid", "pending", "failed"]).default("paid"),
 });
 
+const ProductsSchema = z.object({
+  action: z.literal("upsert_products"),
+  products: z.array(z.object({
+    id: z.string().uuid().optional(),
+    barcode: z.string().trim().max(64).optional(),
+    name: z.string().trim().min(1).max(255),
+    description: z.string().max(5000).optional(),
+    category: z.string().max(80).optional(),
+    price: z.number().min(0).max(100000000),
+    image_url: z.string().url().max(2000).nullable().optional(),
+    images: z.array(z.string().url().max(2000)).max(20).optional(),
+    stock_quantity: z.number().int().min(0).max(10000000).nullable().optional(),
+    is_active: z.boolean().optional(),
+  })).min(1).max(500),
+});
+
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let r = 0;
@@ -60,7 +76,41 @@ Deno.serve(async (req) => {
 
     if (req.method !== "POST") return json({ ok: false, error: "Use GET or POST" }, 405);
 
-    const parsed = SaleSchema.safeParse(await req.json().catch(() => null));
+    const body = await req.json().catch(() => null);
+
+    // Products created/edited in the POS -> Admin -> website.
+    if (body?.action === "upsert_products") {
+      const p = ProductsSchema.safeParse(body);
+      if (!p.success) return json({ ok: false, error: "Invalid products", fields: p.error.flatten().fieldErrors }, 400);
+      const results: { pos_ref: string; id?: string; error?: string }[] = [];
+      for (const it of p.data.products) {
+        const row: Record<string, unknown> = { name: it.name, price: it.price };
+        if (it.description !== undefined) row.description = it.description;
+        if (it.category !== undefined) row.category = it.category;
+        if (it.image_url !== undefined) row.image_url = it.image_url;
+        if (it.images !== undefined) row.images = it.images;
+        if (it.is_active !== undefined) row.is_active = it.is_active;
+        if (it.barcode !== undefined) row.barcode = it.barcode || null;
+        if (it.stock_quantity !== undefined) {
+          row.stock_quantity = it.stock_quantity;
+          if (it.stock_quantity !== null) {
+            row.stock_status = it.stock_quantity === 0 ? "out_of_stock" : it.stock_quantity <= 5 ? "low_stock" : "in_stock";
+          }
+        }
+        let existingId = it.id ?? null;
+        if (!existingId && it.barcode) {
+          const { data } = await db.from("products").select("id").eq("barcode", it.barcode).maybeSingle();
+          existingId = data?.id ?? null;
+        }
+        const res = existingId
+          ? await db.from("products").update(row).eq("id", existingId).select("id").single()
+          : await db.from("products").insert(row).select("id").single();
+        results.push({ pos_ref: it.id ?? it.barcode ?? it.name, id: res.data?.id, error: res.error?.message });
+      }
+      return json({ ok: results.every((r) => !r.error), results });
+    }
+
+    const parsed = SaleSchema.safeParse(body);
     if (!parsed.success) return json({ ok: false, error: "Invalid sale", fields: parsed.error.flatten().fieldErrors }, 400);
     const s = parsed.data;
 

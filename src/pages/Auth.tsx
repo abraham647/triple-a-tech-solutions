@@ -99,6 +99,9 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      // The OAuth redirect leaves and returns in the same tab — mark it so the
+      // window-session guard doesn't wipe the fresh login on return.
+      markWindowSession();
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${nextPath || "/"}`,
       });

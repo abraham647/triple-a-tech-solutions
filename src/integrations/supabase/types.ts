@@ -333,6 +333,7 @@ export type Database = {
         Row: {
           barcode: string | null
           category: string
+          cost_price: number
           created_at: string
           description: string
           display_order: number
@@ -342,6 +343,7 @@ export type Database = {
           is_active: boolean
           name: string
           price: number
+          reorder_level: number | null
           stock_quantity: number | null
           stock_status: string
           updated_at: string
@@ -349,6 +351,7 @@ export type Database = {
         Insert: {
           barcode?: string | null
           category?: string
+          cost_price?: number
           created_at?: string
           description?: string
           display_order?: number
@@ -358,6 +361,7 @@ export type Database = {
           is_active?: boolean
           name: string
           price?: number
+          reorder_level?: number | null
           stock_quantity?: number | null
           stock_status?: string
           updated_at?: string
@@ -365,6 +369,7 @@ export type Database = {
         Update: {
           barcode?: string | null
           category?: string
+          cost_price?: number
           created_at?: string
           description?: string
           display_order?: number
@@ -374,6 +379,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           price?: number
+          reorder_level?: number | null
           stock_quantity?: number | null
           stock_status?: string
           updated_at?: string

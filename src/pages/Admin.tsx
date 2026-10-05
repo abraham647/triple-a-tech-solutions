@@ -1201,7 +1201,11 @@ const Admin = () => {
                 <div className="space-y-2"><Label>Stock quantity</Label><Input type="number" value={editItem.stock_quantity ?? ""} onChange={e => setEditItem({ ...editItem, stock_quantity: e.target.value })} className="rounded-xl" /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" value={editItem.price} onChange={e => setEditItem({ ...editItem, price: e.target.value })} className="rounded-xl" /></div>
+                <div className="space-y-2"><Label>Selling Price (KES)</Label><Input type="number" value={editItem.price} onChange={e => setEditItem({ ...editItem, price: e.target.value })} className="rounded-xl" /></div>
+                <div className="space-y-2"><Label>Cost Price (KES)</Label><Input type="number" value={editItem.cost_price ?? ""} onChange={e => setEditItem({ ...editItem, cost_price: e.target.value })} className="rounded-xl" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Reorder Level</Label><Input type="number" value={editItem.reorder_level ?? ""} onChange={e => setEditItem({ ...editItem, reorder_level: e.target.value })} placeholder="e.g. 5" className="rounded-xl" /></div>
                 <div className="space-y-2"><Label>Display Order</Label><Input type="number" value={editItem.display_order} onChange={e => setEditItem({ ...editItem, display_order: parseInt(e.target.value) || 0 })} className="rounded-xl" /></div>
               </div>
               <div className="space-y-2">

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { markWindowSession } from "@/lib/sessionGuard";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -99,6 +100,9 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      // The OAuth redirect leaves and returns in the same tab — mark it so the
+      // window-session guard doesn't wipe the fresh login on return.
+      markWindowSession();
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${nextPath || "/"}`,
       });

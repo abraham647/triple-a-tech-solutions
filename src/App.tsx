@@ -18,6 +18,12 @@ import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 import BackToAdminButton from "./components/BackToAdminButton";
+import { enforceWindowSession } from "./lib/sessionGuard";
+
+// Force a fresh login whenever the site is opened in a new browser window,
+// even if the previous window was closed without signing out.
+enforceWindowSession();
+
 
 
 // Tuned for read-heavy public traffic: keep fetched data in memory, avoid

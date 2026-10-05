@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -262,6 +263,8 @@ const Admin = () => {
       images: Array.isArray(item.images) ? item.images : [],
       stock_status: item.stock_status, display_order: item.display_order || 0,
       barcode: item.barcode?.trim() || null,
+      cost_price: item.cost_price === "" || item.cost_price == null ? 0 : Number(item.cost_price),
+      reorder_level: item.reorder_level === "" || item.reorder_level == null ? null : Number(item.reorder_level),
       stock_quantity: item.stock_quantity === "" || item.stock_quantity == null ? null : Number(item.stock_quantity),
       is_active: item.is_active ?? true,
     };
@@ -616,34 +619,63 @@ const Admin = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-bold text-lg">Products ({products.length})</h2>
-              <Button size="sm" onClick={() => { setEditItem({ name: "", description: "", category: "CCTV", price: 0, image_url: "", stock_status: "in_stock", display_order: 0, is_active: true }); setEditDialog("products"); }}>
+              <Button size="sm" onClick={() => { setEditItem({ name: "", description: "", category: "CCTV", price: 0, cost_price: 0, image_url: "", stock_status: "in_stock", display_order: 0, is_active: true, barcode: "", stock_quantity: "", reorder_level: "" }); setEditDialog("products"); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Product
               </Button>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-1">
-              {products.map(p => (
-                <div key={p.id} className={`rounded-xl border bg-card overflow-hidden ${p.is_active ? "border-border" : "border-border opacity-60"}`}>
-                  <div className="h-32 bg-secondary/40 flex items-center justify-center overflow-hidden">
-                    {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-8 h-8 text-muted-foreground" />}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-sm truncate flex-1">{p.name}</p>
-                      {!p.is_active && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Hidden</span>}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{p.category} · {p.stock_status}{p.stock_quantity != null ? ` (${p.stock_quantity} left)` : ""} · Order: {p.display_order}</p>
-                    <p className="text-sm font-semibold text-primary mt-1">KES {Number(p.price).toLocaleString()}</p>
-                    <div className="flex gap-1 mt-3">
-                      <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditDialog("products"); }}><Edit className="w-4 h-4" /></Button>
-                      <Button size="sm" variant="ghost" onClick={() => toggleProductActive(p.id, p.is_active)} title={p.is_active ? "Hide" : "Show"}>
-                        {p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="w-4 h-4" /></Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {products.length === 0 && <p className="text-muted-foreground text-sm">No products yet.</p>}
+            <div className="rounded-xl border bg-card overflow-hidden max-h-[calc(100vh-200px)] overflow-y-auto">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-card">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Barcode</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Product</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Category</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold text-right">Cost</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold text-right">Selling</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold text-right">In Stock</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold text-right">Reorder</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Status</TableHead>
+                    <TableHead className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map(p => {
+                    const lowStock = p.stock_quantity != null && p.reorder_level != null && p.stock_quantity <= p.reorder_level;
+                    return (
+                      <TableRow key={p.id} className={!p.is_active ? "opacity-60" : ""}>
+                        <TableCell className="text-xs font-mono text-muted-foreground">{p.barcode || "—"}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {p.image_url ? <img src={p.image_url} alt={p.name} className="w-8 h-8 rounded object-cover shrink-0" /> : <Package className="w-4 h-4 text-muted-foreground shrink-0" />}
+                            <span className="font-medium text-sm max-w-[220px] truncate" title={p.name}>{p.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{p.category}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground text-right">{Number(p.cost_price ?? 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-sm font-semibold text-primary text-right">KES {Number(p.price).toLocaleString()}</TableCell>
+                        <TableCell className={`text-sm text-right font-medium ${lowStock ? "text-destructive" : ""}`}>{p.stock_quantity ?? "—"}</TableCell>
+                        <TableCell className="text-sm text-right text-muted-foreground">{p.reorder_level ?? "—"}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            p.stock_status === "in_stock" ? "bg-emerald-500/15 text-emerald-600" :
+                            p.stock_status === "low_stock" ? "bg-yellow-500/20 text-yellow-600" :
+                            p.stock_status === "preorder" ? "bg-primary/20 text-primary" :
+                            "bg-destructive/15 text-destructive"
+                          }`}>{p.stock_status === "in_stock" ? "In Stock" : p.stock_status === "low_stock" ? "Low Stock" : p.stock_status === "preorder" ? "Pre-order" : "Out of Stock"}</span>
+                        </TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditDialog("products"); }}><Edit className="w-4 h-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => toggleProductActive(p.id, p.is_active)} title={p.is_active ? "Hide" : "Show"}>
+                            {p.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="w-4 h-4" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {products.length === 0 && <p className="text-muted-foreground text-sm p-4">No products yet.</p>}
             </div>
           </div>
         )}

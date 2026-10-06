@@ -51,6 +51,7 @@ const Admin = () => {
   const [empRecords, setEmpRecords] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [productSearch, setProductSearch] = useState("");
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [aboutSections, setAboutSections] = useState<any[]>([]);
 

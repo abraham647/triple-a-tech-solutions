@@ -129,6 +129,7 @@ export const useFeaturedProducts = (limit = 6) =>
         .from("products")
         .select(sel("id, name, description, category, price, image_url, images, stock_status, display_order"))
         .eq("is_active", true)
+        .not("category", "ilike", "software")
         .order("display_order")
         .limit(limit)
         .returns<any[]>();
@@ -147,6 +148,7 @@ export const useProductCategories = () =>
         .from("products")
         .select(sel("category"))
         .eq("is_active", true)
+        .not("category", "ilike", "software")
         .returns<{ category: string }[]>();
       if (error) throw error;
       const unique = new Map<string, string>();
@@ -186,7 +188,8 @@ export const useProductsPage = ({ page, pageSize, category, search }: ProductPag
         .select(sel("id, name, description, category, price, image_url, images, stock_status, display_order"), {
           count: "exact",
         })
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .not("category", "ilike", "software");
 
       if (category !== "all") q = q.ilike("category", category.trim());
       if (search.trim()) {

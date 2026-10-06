@@ -17,6 +17,14 @@ const SHORT = 2 * 60 * 1000;
 
 const sel = (s: string): string => s;
 
+/**
+ * Categories that are managed internally (visible in the admin Products tab)
+ * but never shown on the public site — no tab, no cards, no search results.
+ */
+const INTERNAL_CATEGORIES = ["software"];
+const internalCategoryFilter = () =>
+  INTERNAL_CATEGORIES.map((c) => `category.not.ilike.${c}`);
+
 export const useServices = () =>
   useQuery({
     queryKey: ["services"],

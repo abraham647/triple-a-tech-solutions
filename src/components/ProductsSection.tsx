@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useFeaturedProducts } from "@/hooks/usePublicData";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -39,7 +39,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
 
   return (
     <div className="group rounded-xl border border-border bg-card overflow-hidden flex flex-col glow-card glow-card-hover transition-all duration-300 hover:border-primary/30">
-      <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => openGallery(0)}>
+      <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => { window.location.assign(`/products/${product.id}`); }}>
         {gallery[0] ? (
           <img src={gallery[0]} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
@@ -54,7 +54,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
       </div>
       <div className="p-5 flex flex-col flex-1">
         <span className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">{product.category}</span>
-        <h3 className="font-display font-semibold text-foreground mb-1">{product.name}</h3>
+        <Link to={`/products/${product.id}`} onClick={() => window.scrollTo({ top: 0 })}><h3 className="font-display font-semibold text-foreground mb-1 hover:text-primary transition-colors">{product.name}</h3></Link>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-1">{product.description}</p>
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="font-display font-bold text-primary">{formatPrice(Number(product.price))}</span>

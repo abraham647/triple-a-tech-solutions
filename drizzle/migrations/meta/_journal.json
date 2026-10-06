@@ -15,6 +15,13 @@
       "when": 1791215366451,
       "tag": "0001_products_cost_reorder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791312622861,
+      "tag": "0002_grant_has_role",
+      "breakpoints": true
     }
   ]
 }

@@ -31,6 +31,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [buyOpen, setBuyOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const goDetail = useNavigate();
 
 
   const openGallery = (i = 0) => { if (gallery.length === 0) return; setActive(i); setGalleryOpen(true); };
@@ -39,7 +40,7 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
 
   return (
     <div className="group rounded-xl border border-border bg-card overflow-hidden flex flex-col glow-card glow-card-hover transition-all duration-300 hover:border-primary/30">
-      <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => { window.location.assign(`/products/${product.id}`); }}>
+      <div className="relative h-48 bg-secondary/40 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => { goDetail(`/products/${product.id}`); window.scrollTo({ top: 0 }); }}>
         {gallery[0] ? (
           <img src={gallery[0]} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (

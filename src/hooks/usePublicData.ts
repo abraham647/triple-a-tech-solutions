@@ -205,3 +205,60 @@ export const useProductsPage = ({ page, pageSize, category, search }: ProductPag
       return { rows: data ?? [], total: count ?? 0 };
     },
   });
+
+const PRODUCT_COLS = "id, name, description, category, price, image_url, images, stock_status, display_order";
+
+/** Single product for the detail page. */
+export const useProduct = (id?: string) =>
+  useQuery({
+    queryKey: ["products", "one", id],
+    enabled: !!id,
+    staleTime: SHORT,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(sel(PRODUCT_COLS))
+        .eq("id", id!)
+        .eq("is_active", true)
+        .not("category", "ilike", INTERNAL_CATEGORY)
+        .maybeSingle<any>();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+/**
+ * Automatic "You might also like": same category first, topped up with other
+ * products so the row is always full. No admin curation needed.
+ */
+export const useRelatedProducts = (product: any | null | undefined, limit = 8) =>
+  useQuery({
+    queryKey: ["products", "related", product?.id, limit],
+    enabled: !!product?.id,
+    staleTime: SHORT,
+    queryFn: async () => {
+      const base = () =>
+        supabase
+          .from("products")
+          .select(sel(PRODUCT_COLS))
+          .eq("is_active", true)
+          .neq("id", product.id)
+          .not("category", "ilike", INTERNAL_CATEGORY);
+      const { data: same, error } = await base()
+        .ilike("category", product.category ?? "")
+        .order("display_order")
+        .limit(limit)
+        .returns<any[]>();
+      if (error) throw error;
+      let rows = same ?? [];
+      if (rows.length < limit) {
+        const { data: more } = await base()
+          .not("category", "ilike", product.category ?? "")
+          .order("display_order")
+          .limit(limit - rows.length)
+          .returns<any[]>();
+        rows = [...rows, ...(more ?? [])];
+      }
+      return rows;
+    },
+  });

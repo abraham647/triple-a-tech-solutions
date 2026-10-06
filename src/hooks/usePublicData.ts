@@ -21,9 +21,7 @@ const sel = (s: string): string => s;
  * Categories that are managed internally (visible in the admin Products tab)
  * but never shown on the public site — no tab, no cards, no search results.
  */
-const INTERNAL_CATEGORIES = ["software"];
-const internalCategoryFilter = () =>
-  INTERNAL_CATEGORIES.map((c) => `category.not.ilike.${c}`);
+const INTERNAL_CATEGORY = "software";
 
 export const useServices = () =>
   useQuery({

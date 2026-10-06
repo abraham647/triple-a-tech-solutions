@@ -17,6 +17,12 @@ const SHORT = 2 * 60 * 1000;
 
 const sel = (s: string): string => s;
 
+/**
+ * Categories that are managed internally (visible in the admin Products tab)
+ * but never shown on the public site — no tab, no cards, no search results.
+ */
+const INTERNAL_CATEGORY = "software";
+
 export const useServices = () =>
   useQuery({
     queryKey: ["services"],
@@ -121,6 +127,7 @@ export const useFeaturedProducts = (limit = 6) =>
         .from("products")
         .select(sel("id, name, description, category, price, image_url, images, stock_status, display_order"))
         .eq("is_active", true)
+        .not("category", "ilike", INTERNAL_CATEGORY)
         .order("display_order")
         .limit(limit)
         .returns<any[]>();
@@ -139,6 +146,7 @@ export const useProductCategories = () =>
         .from("products")
         .select(sel("category"))
         .eq("is_active", true)
+        .not("category", "ilike", INTERNAL_CATEGORY)
         .returns<{ category: string }[]>();
       if (error) throw error;
       const unique = new Map<string, string>();
@@ -178,7 +186,8 @@ export const useProductsPage = ({ page, pageSize, category, search }: ProductPag
         .select(sel("id, name, description, category, price, image_url, images, stock_status, display_order"), {
           count: "exact",
         })
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .not("category", "ilike", INTERNAL_CATEGORY);
 
       if (category !== "all") q = q.ilike("category", category.trim());
       if (search.trim()) {

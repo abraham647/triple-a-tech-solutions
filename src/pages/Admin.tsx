@@ -623,6 +623,7 @@ const Admin = () => {
                 <Plus className="w-4 h-4 mr-1" /> Add Product
               </Button>
             </div>
+            <Input className="mb-4" placeholder="Search by name, barcode or category..." value={productSearch} onChange={e => setProductSearch(e.target.value)} />
             <div className="rounded-xl border bg-card overflow-hidden max-h-[calc(100vh-200px)] overflow-y-auto">
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-card">
@@ -639,7 +640,11 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map(p => {
+                  {products.filter(p => {
+                    const q = productSearch.trim().toLowerCase();
+                    if (!q) return true;
+                    return [p.name, p.barcode, p.category, p.description].some((v: any) => String(v ?? "").toLowerCase().includes(q));
+                  }).map(p => {
                     const lowStock = p.stock_quantity != null && p.reorder_level != null && p.stock_quantity <= p.reorder_level;
                     return (
                       <TableRow key={p.id} className={!p.is_active ? "opacity-60" : ""}>

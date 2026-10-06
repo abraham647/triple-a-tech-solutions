@@ -66,6 +66,8 @@ Deno.serve(async (req) => {
       const since = new URL(req.url).searchParams.get("updated_since");
       let q = db.from("products")
         .select("id, name, description, category, price, image_url, images, barcode, stock_quantity, stock_status, is_active, updated_at")
+        .not("barcode", "is", null)
+        .neq("barcode", "")
         .order("name");
       if (since) q = q.gte("updated_at", since);
       else q = q.eq("is_active", true);

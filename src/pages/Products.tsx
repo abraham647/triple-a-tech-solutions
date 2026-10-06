@@ -66,24 +66,25 @@ const Products = () => {
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-8 max-w-3xl mx-auto">
-            <div className="relative flex-1">
+          <div className="mb-8 max-w-5xl mx-auto space-y-4">
+            <div className="relative w-full">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search products..."
-                className="pl-9 rounded-xl h-11"
+                placeholder="Search products by name, description or category..."
+                aria-label="Search products"
+                className="w-full pl-10 h-12 text-base"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap justify-center">
               {categories.map(c => (
                 <Button
-                  key={c}
+                  key={c.toLocaleLowerCase()}
                   size="sm"
                   variant={category === c ? "default" : "outline"}
                   onClick={() => setCategory(c)}
-                  className="rounded-xl capitalize"
+                  className="capitalize"
                 >
                   {c}
                 </Button>

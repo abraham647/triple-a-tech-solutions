@@ -141,7 +141,14 @@ export const useProductCategories = () =>
         .eq("is_active", true)
         .returns<{ category: string }[]>();
       if (error) throw error;
-      return Array.from(new Set((data ?? []).map((r) => r.category).filter(Boolean))).sort();
+      const unique = new Map<string, string>();
+      for (const row of data ?? []) {
+        const label = row.category?.trim();
+        if (label && !unique.has(label.toLocaleLowerCase())) {
+          unique.set(label.toLocaleLowerCase(), label);
+        }
+      }
+      return Array.from(unique.values()).sort((a, b) => a.localeCompare(b));
     },
   });
 
@@ -173,10 +180,15 @@ export const useProductsPage = ({ page, pageSize, category, search }: ProductPag
         })
         .eq("is_active", true);
 
-      if (category !== "all") q = q.eq("category", category);
+      if (category !== "all") q = q.ilike("category", category.trim());
       if (search.trim()) {
-        const term = `%${search.trim()}%`;
-        q = q.or(`name.ilike.${term},description.ilike.${term}`);
+        // PostgREST's `or` filter treats punctuation as syntax, so strip those
+        // characters before composing a safe, multi-field catalog search.
+        const safeSearch = search.trim().replace(/[,%()."\\]/g, " ").replace(/\s+/g, " ");
+        if (safeSearch) {
+          const term = `%${safeSearch}%`;
+          q = q.or(`name.ilike.${term},description.ilike.${term},category.ilike.${term}`);
+        }
       }
 
       const { data, error, count } = await q.order("display_order").range(from, to).returns<any[]>();

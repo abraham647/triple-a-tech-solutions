@@ -8,6 +8,9 @@ import BuyDialog from "@/components/BuyDialog";
 import ProductInquiryDialog from "@/components/ProductInquiryDialog";
 import { Button } from "@/components/ui/button";
 import { formatPrice, getGallery, stockLabel } from "@/components/ProductsSection";
+import { cart } from "@/hooks/useCart";
+import DeliveryInfo from "@/components/DeliveryInfo";
+import { toast } from "sonner";
 import { useProduct, useRelatedProducts } from "@/hooks/usePublicData";
 import { ChevronLeft, ChevronRight, Minus, Plus, Package, ShoppingCart, MessageSquare, Truck, ArrowLeft } from "lucide-react";
 
@@ -89,18 +92,21 @@ const ProductDetail = () => {
                 <div className="border-t border-border my-6" />
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{product.description}</p>
 
-                {canBuy && (
+                {canBuy && (<>
                   <div className="flex items-center gap-3 mt-8">
                     <div className="flex items-center border border-border rounded-xl h-12">
                       <button aria-label="Decrease" className="px-4 h-full" onClick={() => setQty(q => Math.max(1, q - 1))}><Minus className="w-4 h-4" /></button>
                       <span className="w-8 text-center">{qty}</span>
                       <button aria-label="Increase" className="px-4 h-full" onClick={() => setQty(q => q + 1)}><Plus className="w-4 h-4" /></button>
                     </div>
-                    <Button size="lg" className="flex-1 h-12 rounded-xl glow-primary tracking-widest uppercase" onClick={() => setBuyOpen(true)}>
-                      <ShoppingCart className="w-4 h-4 mr-2" /> Buy it now
+                    <Button size="lg" variant="outline" className="flex-1 h-12 rounded-xl tracking-widest uppercase" onClick={() => { cart.add({ id: product.id, name: product.name, price: Number(product.price), image: gallery[0] }, qty); toast.success("Added to cart"); }}>
+                      <ShoppingCart className="w-4 h-4 mr-2" /> Add to cart
                     </Button>
                   </div>
-                )}
+                  <Button size="lg" className="w-full h-12 rounded-xl glow-primary tracking-widest uppercase mt-3" onClick={() => setBuyOpen(true)}>
+                    Buy it now
+                  </Button>
+                </>)}
                 <Button size="lg" variant="outline" className="w-full h-12 rounded-xl mt-3" onClick={() => setInqOpen(true)}>
                   <MessageSquare className="w-4 h-4 mr-2" /> Send an inquiry
                 </Button>
@@ -111,7 +117,7 @@ const ProductDetail = () => {
                 >
                   Chat on WhatsApp
                 </a>
-                <p className="flex items-center gap-2 text-sm text-muted-foreground mt-6"><Truck className="w-4 h-4" /> Delivery available across Kenya — contact us for timelines.</p>
+                <DeliveryInfo />
               </div>
             </div>
           )}

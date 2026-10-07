@@ -52,6 +52,7 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
   const [method, setMethod] = useState<Method>("mpesa");
   const [form, setForm] = useState({ customer_name: "", customer_phone: "", customer_email: "", delivery_notes: "" });
   const [quantity, setQuantity] = useState(1);
+  useEffect(() => { if (open && product?.initialQuantity) setQuantity(product.initialQuantity); }, [open, product?.initialQuantity]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [stage, setStage] = useState<Stage>("form");
   const [submitting, setSubmitting] = useState(false);

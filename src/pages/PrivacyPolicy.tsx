@@ -50,7 +50,7 @@ const PrivacyPolicy = () => (
 
           <section>
             <h2 className="text-lg font-semibold text-foreground">6. Your Rights</h2>
-            <p>You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:info@tripleaatech.com" className="text-primary hover:underline">info@tripleaatech.com</a> or call <a href="tel:+254112860205" className="text-primary hover:underline">+254 112 860 205</a>.</p>
+            <p>You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:info@tripleatechsolutions.co.ke" className="text-primary hover:underline">info@tripleatechsolutions.co.ke</a> or call <a href="tel:+254112860205" className="text-primary hover:underline">+254 112 860 205</a>.</p>
           </section>
 
           <section>

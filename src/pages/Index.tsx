@@ -23,7 +23,7 @@ const Index = () => (
         description: "Comprehensive physical security, cyber security & tech solutions in Kenya",
         url: "https://triple-a-tech-solutions.lovable.app",
         telephone: "+254112860205",
-        email: "info@tripleaatech.com",
+        email: "info@tripleatechsolutions.co.ke",
         address: { "@type": "PostalAddress", addressLocality: "Nairobi", addressCountry: "KE" },
       }}
     />

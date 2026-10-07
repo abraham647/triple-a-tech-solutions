@@ -121,8 +121,8 @@ const Footer = () => {
                 <a href="https://wa.me/254732695197" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
                   <Phone className="w-3.5 h-3.5" /> +254 732 695 197 (WhatsApp)
                 </a>
-                <a href="mailto:info@tripleaatech.com" className="flex items-center gap-2 hover:text-primary transition-colors">
-                  <MailIcon className="w-3.5 h-3.5" /> info@tripleaatech.com
+                <a href="mailto:info@tripleatechsolutions.co.ke" className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <MailIcon className="w-3.5 h-3.5" /> info@tripleatechsolutions.co.ke
                 </a>
               </div>
             </div>

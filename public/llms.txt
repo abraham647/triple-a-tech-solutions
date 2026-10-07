@@ -18,7 +18,7 @@ Allow: /
 # Website: https://triple-a-tech-solutions.lovable.app
 # What we do: Physical security, cyber security and IT solutions provider in Kenya
 # Coverage / audience: Homes and businesses across Nairobi and Kenya
-# Contact: info@tripleaatech.com | +254 112 860 205
+# Contact: info@tripleatechsolutions.co.ke | +254 112 860 205
 
 # ── CORE OFFERINGS ───────────────────────────
 # - CCTV installation & surveillance systems

@@ -1,4 +1,5 @@
-import { Shield, Menu, X, LogOut, LogIn } from "lucide-react";
+import { Shield, Menu, X, LogOut, LogIn, ShoppingCart } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [session, setSession] = useState<any>(null);
   const navigate = useNavigate();
+  const { count: cartCount } = useCart();
   const location = useLocation();
 
   useEffect(() => {
@@ -81,6 +83,10 @@ const Navbar = () => {
               {item.label}
             </button>
           ))}
+          <button aria-label="Cart" onClick={() => navigate("/cart")} className="relative p-2 text-muted-foreground hover:text-foreground">
+            <ShoppingCart className="w-5 h-5" />
+            {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">{cartCount}</span>}
+          </button>
           <Button size="sm" className="ml-3 glow-primary" onClick={() => scrollTo("contact")}>
             Get a Quote
           </Button>
@@ -95,9 +101,15 @@ const Navbar = () => {
           )}
         </div>
 
+        <div className="md:hidden flex items-center">
+        <button aria-label="Cart" onClick={() => navigate("/cart")} className="relative p-2 text-muted-foreground hover:text-foreground">
+          <ShoppingCart className="w-5 h-5" />
+          {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">{cartCount}</span>}
+        </button>
         <button className="md:hidden text-foreground p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
+        </div>
       </div>
 
       {open && (

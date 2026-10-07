@@ -39,6 +39,7 @@ interface Props {
   product: any | null;
   open: boolean;
   onClose: () => void;
+  onOrdered?: () => void;
 }
 
 const METHODS: { value: Method; label: string; hint: string }[] = [
@@ -47,7 +48,7 @@ const METHODS: { value: Method; label: string; hint: string }[] = [
   { value: "cash_on_delivery", label: "Pay on delivery", hint: "Pay a 50% deposit now via M-Pesa prompt, then the balance when your order arrives." },
 ];
 
-const BuyDialog = ({ product, open, onClose }: Props) => {
+const BuyDialog = ({ product, open, onClose, onOrdered }: Props) => {
   const { toast } = useToast();
   const [method, setMethod] = useState<Method>("mpesa");
   const [form, setForm] = useState({ customer_name: "", customer_phone: "", customer_email: "", delivery_notes: "" });
@@ -75,6 +76,7 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
   };
 
   useEffect(() => stopPolling, []);
+  useEffect(() => { if (stage === "paid" || stage === "submitted") onOrdered?.(); }, [stage]);
 
   useEffect(() => {
     if (!open) {
@@ -193,7 +195,7 @@ const BuyDialog = ({ product, open, onClose }: Props) => {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{product ? `Buy ${product.name}` : "Place an order"}</DialogTitle>
+          <DialogTitle>{product?.isCart ? "Checkout your cart" : product ? `Buy ${product.name}` : "Place an order"}</DialogTitle>
         </DialogHeader>
 
         {stage === "form" && (

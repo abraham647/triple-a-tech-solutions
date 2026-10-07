@@ -6,6 +6,8 @@ import { Package, ArrowRight, MessageSquare, Images, ChevronLeft, ChevronRight, 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ProductInquiryDialog from "./ProductInquiryDialog";
 import BuyDialog from "./BuyDialog";
+import { cart } from "@/hooks/useCart";
+import { toast } from "sonner";
 
 
 export const formatPrice = (price: number) =>
@@ -66,6 +68,11 @@ export const ProductCard = ({ product, onInquire }: { product: any; onInquire: (
         {Number(product.price) > 0 && product.stock_status !== "out_of_stock" && (
           <Button size="sm" onClick={() => setBuyOpen(true)} className="w-full rounded-xl glow-primary mb-2 h-9">
             <ShoppingCart className="w-4 h-4 mr-1.5" /> Buy Now
+          </Button>
+        )}
+        {Number(product.price) > 0 && product.stock_status !== "out_of_stock" && (
+          <Button size="sm" variant="outline" onClick={() => { cart.add({ id: product.id, name: product.name, price: Number(product.price), image: gallery[0] }); toast.success("Added to cart"); }} className="w-full rounded-xl mb-2 h-9">
+            Add to Cart
           </Button>
         )}
 

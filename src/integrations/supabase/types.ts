@@ -124,13 +124,18 @@ export type Database = {
       employees: {
         Row: {
           created_at: string
+          department: string | null
           email: string | null
+          has_pos_access: boolean
           hired_at: string
           id: string
           is_active: boolean
+          job_title: string | null
           name: string
           phone: string | null
           photo_url: string | null
+          pos_ref: string | null
+          pos_role: string | null
           qr_code: string
           released_at: string | null
           role: string
@@ -140,13 +145,18 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          department?: string | null
           email?: string | null
+          has_pos_access?: boolean
           hired_at?: string
           id?: string
           is_active?: boolean
+          job_title?: string | null
           name: string
           phone?: string | null
           photo_url?: string | null
+          pos_ref?: string | null
+          pos_role?: string | null
           qr_code?: string
           released_at?: string | null
           role: string
@@ -156,13 +166,18 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          department?: string | null
           email?: string | null
+          has_pos_access?: boolean
           hired_at?: string
           id?: string
           is_active?: boolean
+          job_title?: string | null
           name?: string
           phone?: string | null
           photo_url?: string | null
+          pos_ref?: string | null
+          pos_role?: string | null
           qr_code?: string
           released_at?: string | null
           role?: string
@@ -585,13 +600,18 @@ export type Database = {
         Args: { p_name: string; p_phone: string; p_photo_url: string }
         Returns: {
           created_at: string
+          department: string | null
           email: string | null
+          has_pos_access: boolean
           hired_at: string
           id: string
           is_active: boolean
+          job_title: string | null
           name: string
           phone: string | null
           photo_url: string | null
+          pos_ref: string | null
+          pos_role: string | null
           qr_code: string
           released_at: string | null
           role: string

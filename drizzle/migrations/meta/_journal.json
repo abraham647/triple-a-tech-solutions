@@ -22,6 +22,13 @@
       "when": 1791312622861,
       "tag": "0002_grant_has_role",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791481838440,
+      "tag": "0003_pos_staff_link",
+      "breakpoints": true
     }
   ]
 }

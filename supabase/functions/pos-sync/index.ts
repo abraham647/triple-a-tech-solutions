@@ -44,6 +44,21 @@ const ProductsSchema = z.object({
   })).min(1).max(500),
 });
 
+const StaffSchema = z.object({
+  action: z.literal("upsert_staff"),
+  staff: z.array(z.object({
+    pos_ref: z.string().trim().min(1).max(100),
+    full_name: z.string().trim().min(1).max(160),
+    email: z.string().trim().email().max(255).nullable().optional().or(z.literal("")),
+    phone: z.string().trim().max(30).nullable().optional(),
+    department: z.string().trim().max(80).nullable().optional(),
+    job_title: z.string().trim().max(120).nullable().optional(),
+    is_active: z.boolean().optional(),
+    pos_role: z.string().trim().max(60).nullable().optional(),
+    has_pos_access: z.boolean().optional(),
+  })).min(1).max(500),
+});
+
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let r = 0;
@@ -62,6 +77,20 @@ Deno.serve(async (req) => {
       auth: { persistSession: false },
     });
 
+    if (req.method === "GET" && new URL(req.url).searchParams.get("resource") === "staff") {
+      const { data, error } = await db.from("employees")
+        .select("id, name, email, phone, department, job_title, role, is_active")
+        .order("name");
+      if (error) return json({ ok: false, error: error.message }, 500);
+      return json({
+        ok: true,
+        staff: (data ?? []).map((e) => ({
+          id: e.id, full_name: e.name, email: e.email, phone: e.phone,
+          department: e.department, job_title: e.job_title ?? e.role, is_active: e.is_active,
+        })),
+      });
+    }
+
     if (req.method === "GET") {
       const since = new URL(req.url).searchParams.get("updated_since");
       let q = db.from("products")
@@ -79,6 +108,40 @@ Deno.serve(async (req) => {
     if (req.method !== "POST") return json({ ok: false, error: "Use GET or POST" }, 405);
 
     const body = await req.json().catch(() => null);
+
+    // Staff created/edited in the POS -> employees.
+    if (body?.action === "upsert_staff") {
+      const p = StaffSchema.safeParse(body);
+      if (!p.success) return json({ ok: false, error: "Invalid staff", fields: p.error.flatten().fieldErrors }, 400);
+      const results: { pos_ref: string; id: string | null; error: string | null }[] = [];
+      for (const s of p.data.staff) {
+        const email = s.email ? s.email.toLowerCase() : null;
+        const row: Record<string, unknown> = {
+          pos_ref: s.pos_ref,
+          name: s.full_name,
+          role: s.job_title || s.department || s.pos_role || "Staff",
+        };
+        if (s.email !== undefined) row.email = email;
+        if (s.phone !== undefined) row.phone = s.phone || null;
+        if (s.department !== undefined) row.department = s.department || null;
+        if (s.job_title !== undefined) row.job_title = s.job_title || null;
+        if (s.pos_role !== undefined) row.pos_role = s.pos_role || null;
+        if (s.has_pos_access !== undefined) row.has_pos_access = s.has_pos_access;
+        if (s.is_active !== undefined) {
+          row.is_active = s.is_active;
+          row.released_at = s.is_active ? null : new Date().toISOString();
+        }
+        let { data: ex } = await db.from("employees").select("id").eq("pos_ref", s.pos_ref).maybeSingle();
+        if (!ex && email) {
+          ({ data: ex } = await db.from("employees").select("id").ilike("email", email).is("pos_ref", null).limit(1).maybeSingle());
+        }
+        const res = ex
+          ? await db.from("employees").update(row).eq("id", ex.id).select("id").single()
+          : await db.from("employees").insert(row).select("id").single();
+        results.push({ pos_ref: s.pos_ref, id: res.data?.id ?? null, error: res.error?.message ?? null });
+      }
+      return json({ ok: results.every((r) => !r.error), results });
+    }
 
     // Products created/edited in the POS -> Admin -> website.
     if (body?.action === "upsert_products") {

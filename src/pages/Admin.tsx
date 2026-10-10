@@ -867,7 +867,7 @@ const Admin = () => {
         {tab === "employees" && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-bold text-lg">Employees ({filteredEmployees.length})</h2>
+              <h2 className="font-display font-bold text-lg">{tab === "staff" ? "Staff — managers & till users" : "Employees"} ({filteredEmployees.length})</h2>
               <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", phone: "", email: "", photo_url: "", is_active: true }); setEditDialog("employees"); }}>
                 <UserPlus className="w-4 h-4 mr-1" /> Add Employee
               </Button>
@@ -902,7 +902,7 @@ const Admin = () => {
                         )}
                         <div className="min-w-0">
                           <p className="font-semibold text-sm truncate">{emp.name}</p>
-                          <p className="text-xs text-muted-foreground">{emp.role}</p>
+                          <p className="text-xs text-muted-foreground">{[emp.job_title || emp.role, emp.department].filter(Boolean).join(" · ")}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
                             status === "active" ? "bg-primary/20 text-primary" :
                             status === "suspended" ? "bg-yellow-500/20 text-yellow-600" :
@@ -945,7 +945,9 @@ const Admin = () => {
                       </div>
                     </div>
                     <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>QR: {emp.qr_code.slice(0, 8)}...</span>
+                      <a className="underline hover:text-primary" href={`/verify/${encodeURIComponent(emp.qr_code)}`} target="_blank" rel="noreferrer">QR: {emp.qr_code.slice(0, 8)}... (test)</a>
+                      {emp.pos_ref && <span className="text-primary">Linked to POS</span>}
+                      {emp.has_pos_access && <span>Till access</span>}
                       {emp.user_id
                         ? <span className="text-primary flex items-center gap-1"><KeyRound className="w-3 h-3" /> Has login</span>
                         : <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> No login</span>}

@@ -31,7 +31,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries" | "orders" | "about";
+type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "staff" | "users" | "profile" | "team" | "products" | "inquiries" | "orders" | "about";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -329,7 +329,10 @@ const Admin = () => {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
-    const verifyUrl = `${window.location.origin}/verify/${esc(emp.qr_code)}`;
+    // Preview links are private, so phones scanning the card could not open them — always use the public site.
+    const host = window.location.hostname;
+    const publicOrigin = /id-preview|lovableproject|localhost/.test(host) ? "https://triple-a-tech-solutions.lovable.app" : window.location.origin;
+    const verifyUrl = `${publicOrigin}/verify/${encodeURIComponent(emp.qr_code)}`;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     printWindow.document.write(`<!DOCTYPE html><html><head><title>Employee ID - ${esc(emp.name)}</title>
@@ -368,6 +371,7 @@ const Admin = () => {
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
+    { key: "staff", label: "Staff", icon: ShieldCheck },
     { key: "users", label: "Users", icon: Users },
     { key: "profile", label: "Profile", icon: Settings },
   ];
@@ -387,10 +391,13 @@ const Admin = () => {
     return "released";
   };
 
-  const filteredEmployees = empFilter === "all" ? employees
-    : empFilter === "active" ? employees.filter(e => e.is_active)
-    : empFilter === "suspended" ? employees.filter(e => !e.is_active && e.suspended_at && !e.released_at)
-    : employees.filter(e => !e.is_active && e.released_at);
+  const STAFF_RE = /(admin|manager|supervisor|director|head|lead|accountant|secretary|cashier)/i;
+  const isStaffMember = (e: any) => !!e.has_pos_access || STAFF_RE.test(`${e.pos_role || ""} ${e.role || ""} ${e.job_title || ""}`);
+  const basePeople = tab === "staff" ? employees.filter(isStaffMember) : employees;
+  const filteredEmployees = empFilter === "all" ? basePeople
+    : empFilter === "active" ? basePeople.filter(e => e.is_active)
+    : empFilter === "suspended" ? basePeople.filter(e => !e.is_active && e.suspended_at && !e.released_at)
+    : basePeople.filter(e => !e.is_active && e.released_at);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -860,7 +867,7 @@ const Admin = () => {
         {tab === "employees" && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display font-bold text-lg">Employees ({filteredEmployees.length})</h2>
+              <h2 className="font-display font-bold text-lg">{tab === "staff" ? "Staff — managers & till users" : "Employees"} ({filteredEmployees.length})</h2>
               <Button size="sm" onClick={() => { setEditItem({ name: "", role: "", phone: "", email: "", photo_url: "", is_active: true }); setEditDialog("employees"); }}>
                 <UserPlus className="w-4 h-4 mr-1" /> Add Employee
               </Button>
@@ -895,7 +902,7 @@ const Admin = () => {
                         )}
                         <div className="min-w-0">
                           <p className="font-semibold text-sm truncate">{emp.name}</p>
-                          <p className="text-xs text-muted-foreground">{emp.role}</p>
+                          <p className="text-xs text-muted-foreground">{[emp.job_title || emp.role, emp.department].filter(Boolean).join(" · ")}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
                             status === "active" ? "bg-primary/20 text-primary" :
                             status === "suspended" ? "bg-yellow-500/20 text-yellow-600" :
@@ -938,7 +945,9 @@ const Admin = () => {
                       </div>
                     </div>
                     <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>QR: {emp.qr_code.slice(0, 8)}...</span>
+                      <a className="underline hover:text-primary" href={`/verify/${encodeURIComponent(emp.qr_code)}`} target="_blank" rel="noreferrer">QR: {emp.qr_code.slice(0, 8)}... (test)</a>
+                      {emp.pos_ref && <span className="text-primary">Linked to POS</span>}
+                      {emp.has_pos_access && <span>Till access</span>}
                       {emp.user_id
                         ? <span className="text-primary flex items-center gap-1"><KeyRound className="w-3 h-3" /> Has login</span>
                         : <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> No login</span>}

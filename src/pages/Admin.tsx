@@ -31,7 +31,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconNames = Object.keys(iconMap);
 
-type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "users" | "profile" | "team" | "products" | "inquiries" | "orders" | "about";
+type TabType = "overview" | "services" | "whyus" | "portfolio" | "testimonials" | "messages" | "employees" | "staff" | "users" | "profile" | "team" | "products" | "inquiries" | "orders" | "about";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -329,7 +329,10 @@ const Admin = () => {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
-    const verifyUrl = `${window.location.origin}/verify/${esc(emp.qr_code)}`;
+    // Preview links are private, so phones scanning the card could not open them — always use the public site.
+    const host = window.location.hostname;
+    const publicOrigin = /id-preview|lovableproject|localhost/.test(host) ? "https://triple-a-tech-solutions.lovable.app" : window.location.origin;
+    const verifyUrl = `${publicOrigin}/verify/${encodeURIComponent(emp.qr_code)}`;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     printWindow.document.write(`<!DOCTYPE html><html><head><title>Employee ID - ${esc(emp.name)}</title>
@@ -368,6 +371,7 @@ const Admin = () => {
     { key: "testimonials", label: "Reviews", icon: Star, badge: testimonials.filter(t => !t.approved).length },
     { key: "messages", label: "Messages", icon: Mail, badge: unreadMessages },
     { key: "employees", label: "Employees", icon: Briefcase },
+    { key: "staff", label: "Staff", icon: ShieldCheck },
     { key: "users", label: "Users", icon: Users },
     { key: "profile", label: "Profile", icon: Settings },
   ];
@@ -387,10 +391,13 @@ const Admin = () => {
     return "released";
   };
 
-  const filteredEmployees = empFilter === "all" ? employees
-    : empFilter === "active" ? employees.filter(e => e.is_active)
-    : empFilter === "suspended" ? employees.filter(e => !e.is_active && e.suspended_at && !e.released_at)
-    : employees.filter(e => !e.is_active && e.released_at);
+  const STAFF_RE = /(admin|manager|supervisor|director|head|lead|accountant|secretary|cashier)/i;
+  const isStaffMember = (e: any) => !!e.has_pos_access || STAFF_RE.test(`${e.pos_role || ""} ${e.role || ""} ${e.job_title || ""}`);
+  const basePeople = tab === "staff" ? employees.filter(isStaffMember) : employees;
+  const filteredEmployees = empFilter === "all" ? basePeople
+    : empFilter === "active" ? basePeople.filter(e => e.is_active)
+    : empFilter === "suspended" ? basePeople.filter(e => !e.is_active && e.suspended_at && !e.released_at)
+    : basePeople.filter(e => !e.is_active && e.released_at);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

@@ -864,7 +864,7 @@ const Admin = () => {
         )}
 
         {/* EMPLOYEES TAB */}
-        {tab === "employees" && (
+        {(tab === "employees" || tab === "staff") && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display font-bold text-lg">{tab === "staff" ? "Staff — managers & till users" : "Employees"} ({filteredEmployees.length})</h2>

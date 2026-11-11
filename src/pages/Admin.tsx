@@ -874,10 +874,10 @@ const Admin = () => {
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">
               {([
-                { key: "all", label: "All", count: employees.length },
-                { key: "active", label: "Active", count: employees.filter(e => e.is_active).length },
-                { key: "suspended", label: "Suspended", count: employees.filter(e => !e.is_active && e.suspended_at && !e.released_at).length },
-                { key: "released", label: "Released", count: employees.filter(e => !e.is_active && e.released_at).length },
+                { key: "all", label: "All", count: basePeople.length },
+                { key: "active", label: "Active", count: basePeople.filter(e => e.is_active).length },
+                { key: "suspended", label: "Suspended", count: basePeople.filter(e => !e.is_active && e.suspended_at && !e.released_at).length },
+                { key: "released", label: "Released", count: basePeople.filter(e => !e.is_active && e.released_at).length },
               ] as const).map(f => (
                 <Button key={f.key} size="sm" variant={empFilter === f.key ? "default" : "outline"} onClick={() => setEmpFilter(f.key)} className="rounded-xl">
                   {f.label} ({f.count})

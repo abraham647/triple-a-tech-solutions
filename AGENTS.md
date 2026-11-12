@@ -1,0 +1,1 @@
+Keep public employee QR verification routed through the service-only Edge Function and its database lookup, so released-record filtering remains server-side.

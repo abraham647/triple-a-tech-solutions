@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, CheckCircle, XCircle, User } from "lucide-react";
+import { getEmployeeVerificationStatus } from "@/lib/employeeVerification";
 
 const EmployeeVerify = () => {
   const { qrCode } = useParams();
@@ -18,9 +19,7 @@ const EmployeeVerify = () => {
       const record = (data as any)?.employee;
 
       if (err || !record) {
-        setError("Employee not found or card is invalid.");
-      } else if (!record.is_active) {
-        setError("This employee card has been deactivated.");
+        setError("Employee not found.");
       } else {
         setEmployee(record);
       }
@@ -37,6 +36,8 @@ const EmployeeVerify = () => {
       </div>
     );
   }
+
+  const employeeStatus = employee ? getEmployeeVerificationStatus(employee) : null;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -55,8 +56,14 @@ const EmployeeVerify = () => {
           </div>
         ) : employee && (
           <div className="bg-card border border-primary/30 rounded-xl p-6 text-center">
-            <CheckCircle className="w-12 h-12 text-primary mx-auto mb-3" />
-            <h2 className="font-semibold text-lg text-primary mb-4">Verified Employee</h2>
+            {employeeStatus === "active" ? (
+              <CheckCircle className="w-12 h-12 text-primary mx-auto mb-3" />
+            ) : (
+              <XCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
+            )}
+            <h2 className={`font-semibold text-lg mb-4 ${employee.is_active ? "text-primary" : "text-destructive"}`}>
+              {employeeStatus === "active" ? "Verified Employee" : "Suspended Employee"}
+            </h2>
             
             {employee.photo_url ? (
               <img src={employee.photo_url} alt={employee.name} className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-primary/30" />
@@ -71,8 +78,8 @@ const EmployeeVerify = () => {
             <p className="text-xs text-muted-foreground mt-3">
               Employed since {new Date(employee.hired_at).toLocaleDateString()}
             </p>
-            <div className="mt-4 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold inline-block">
-              ✅ Active Employee
+            <div className={`mt-4 px-3 py-1.5 rounded-full text-xs font-semibold inline-block ${employeeStatus === "active" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+              {employeeStatus === "active" ? "Active Employee" : "Suspended — Not Active"}
             </div>
           </div>
         )}

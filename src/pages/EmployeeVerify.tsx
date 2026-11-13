@@ -20,6 +20,8 @@ const EmployeeVerify = () => {
 
       if (err || !record) {
         setError("Employee not found.");
+      } else if (getEmployeeVerificationStatus(record) === "not_found") {
+        setError("Employee not found.");
       } else {
         setEmployee(record);
       }
@@ -61,7 +63,7 @@ const EmployeeVerify = () => {
             ) : (
               <XCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
             )}
-            <h2 className={`font-semibold text-lg mb-4 ${employee.is_active ? "text-primary" : "text-destructive"}`}>
+            <h2 className={`font-semibold text-lg mb-4 ${employeeStatus === "active" ? "text-primary" : "text-destructive"}`}>
               {employeeStatus === "active" ? "Verified Employee" : "Suspended Employee"}
             </h2>
             
